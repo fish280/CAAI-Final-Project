@@ -33,7 +33,7 @@ Before your team spends hours building, I want you to catch dead-end ideas early
 
 What's the subject area, and who is this dashboard for? Two to three sentences — enough that someone outside your team understands the idea without asking follow-up questions.
 
-*Healthcare statistics are often published as single figures, without regard to the other variables that impact the incidence of a condition. We want to show patterns in diabetes incidence by location, alongside other medical and social factors. This dashboard could be used by county and state health departments to inform the allocation of resources for diabetes care and prevention, or by research centers and non-profits to direct where research should be conducted.*
+*Healthcare statistics are often published as single figures, without regard to the other variables that impact the incidence of a condition. We want to show patterns in various disease incidence by location, alongside other medical and social factors. This dashboard could be used by county and state health departments to inform the allocation of resources for the care and prevention of various diseases, or by research centers and non-profits to direct where research should be conducted.*
 
 ---
 
@@ -54,7 +54,8 @@ Name the actual source — not "we'll find something." If you're not sure it wor
 
 State 1–3 questions your dashboard will let a user explore — not just "show the data," but questions a user could answer differently depending on what they filter or select. For each, note which chart or callback you picture answering it.
 
-*[Write your response here]*
+*What variables are correlated with disease rates (either medical or social)? Users can explore this with an interactive scatterplot: they choose a variable from a dropdown to visualize the relationships between that variable and disease rates.
+Where are different diseases most common? Users can explore this with an interactive chloropleth map, in which they can choose the disease to visualize, and click a toggle to display age-adjusted statistics.*
 
 ---
 
