@@ -1,4 +1,4 @@
----
+git ---
 title: "Lab: Dash Project Topic Proposal"
 subtitle: "Team Dash App Project Check List"
 date: ""
@@ -25,7 +25,7 @@ Before your team spends hours building, I want you to catch dead-end ideas early
 
 **Team name:** *[...]*
 
-**Members:** *[...]*
+**Members:** *Samuel Ifeadi, David Omitogun, Lauren Fisher*
 
 ---
 
@@ -33,7 +33,7 @@ Before your team spends hours building, I want you to catch dead-end ideas early
 
 What's the subject area, and who is this dashboard for? Two to three sentences — enough that someone outside your team understands the idea without asking follow-up questions.
 
-*[Write your response here]*
+*Healthcare statistics are often published as single figures, without regard to the other variables that impact the incidence of a condition. We want to show patterns in diabetes incidence by location, alongside other medical and social factors. This dashboard could be used by county and state health departments to inform the allocation of resources for diabetes care and prevention, or by research centers and non-profits to direct where research should be conducted.*
 
 ---
 
@@ -41,11 +41,11 @@ What's the subject area, and who is this dashboard for? Two to three sentences �
 
 Name the actual source — not "we'll find something." If you're not sure it works yet, say so and name your backup.
 
-- **Source name and link:** *[...]*
-- **Format** (CSV, JSON, SQL table, REST API, etc.): *[...]*
-- **Rough size** (rows/columns, date range, or number of records): *[...]*
-- **Access requirements** (API key, rate limits, cost, login): *[...]*
-- **License/usage terms** (can you actually use and share this?): *[...]*
+- **Source name and link:** *"PLACES: County Data (GIS Friendly Format), 2025", https://data.cdc.gov/500-Cities-Places/PLACES-County-Data-GIS-Friendly-Format-2025-releas/i46a-9kgh/about_data*
+- **Format** (CSV, JSON, SQL table, REST API, etc.): *CSV*
+- **Rough size** (rows/columns, date range, or number of records): *3143 Counties, about 2950 with fully complete data. Specifically for 2025. 167 Variables*
+- **Access requirements** (API key, rate limits, cost, login): *No access requirements for the CSV*
+- **License/usage terms** (can you actually use and share this?): *CDC Data does not require a license for general use.*
 
 
 ---
