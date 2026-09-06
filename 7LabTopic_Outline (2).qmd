@@ -1,33 +1,22 @@
-git ---
-title: "Lab: Dash Project Topic Proposal"
-subtitle: "Team Dash App Project Check List"
-date: ""
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    theme: cosmo
-    self-contained: true
----
+git --- title: "Lab: Dash Project Topic Proposal" subtitle: "Team Dash App Project Check List" date: "" format: html: toc: true toc-depth: 3 theme: cosmo self-contained: true ---
 
 ## Overview
 
 Before your team spends hours building, I want you to catch dead-end ideas early: a dataset that turns out to be too small, an API that's paywalled, or a question that doesn't actually need a dashboard. This lab is short on purpose — work through it with your team during class and answer each question directly, in plain language. One submission per team.
 
-
-::: {.callout-note}
+::: callout-note
 **How to complete this lab:** Edit this `.qmd` file directly — one shared copy per team. Wherever you see text in square brackets `[...]`, delete the brackets and the placeholder text and type your own response in its place.
 :::
 
----
+------------------------------------------------------------------------
 
 ## Team
 
-**Team name:** *[...]*
+**Team name:** *Team 9*
 
 **Members:** *Samuel Ifeadi, David Omitogun, Lauren Fisher*
 
----
+------------------------------------------------------------------------
 
 ## 1. Topic
 
@@ -35,7 +24,7 @@ What's the subject area, and who is this dashboard for? Two to three sentences �
 
 *Healthcare statistics are often published as single figures, without regard to the other variables that impact the incidence of a condition. We want to show patterns in various disease incidence by location, alongside other medical and social factors. This dashboard could be used by county and state health departments to inform the allocation of resources for the care and prevention of various diseases, or by research centers and non-profits to direct where research should be conducted.*
 
----
+------------------------------------------------------------------------
 
 ## 2. Dataset or API
 
@@ -47,43 +36,88 @@ Name the actual source — not "we'll find something." If you're not sure it wor
 - **Access requirements** (API key, rate limits, cost, login): *No access requirements for the CSV*
 - **License/usage terms** (can you actually use and share this?): *CDC Data does not require a license for general use.*
 
-
----
+------------------------------------------------------------------------
 
 ## 3. What are we trying to answer?
 
 State 1–3 questions your dashboard will let a user explore — not just "show the data," but questions a user could answer differently depending on what they filter or select. For each, note which chart or callback you picture answering it.
 
-**Which counties need help first, and why?** A ranked bar chart lets users
-pick a health measure and a state, then see counties sorted from worst to
-best : a fast way to answer "just tell me where to focus."
+**Which counties need help first, and why?** A ranked bar chart lets users pick a health measure and a state, then see counties sorted from worst to best : a fast way to answer "just tell me where to focus."
 
-*What variables are correlated with disease rates (either medical or social)? (like lack of insurance or physical inactivity)? Users can explore this with an interactive scatterplot: they choose a variable from a dropdown to visualize the relationships between that variable and disease rates.
-Where are different diseases most common? Users can explore this with an interactive chloropleth map, in which they can choose the disease to visualize, and click a toggle to display age-adjusted statistics.*
+*What variables are correlated with disease rates (either medical or social)? (like lack of insurance or physical inactivity)? Users can explore this with an interactive scatterplot: they choose a variable from a dropdown to visualize the relationships between that variable and disease rates. Where are different diseases most common? Users can explore this with an interactive chloropleth map, in which they can choose the disease to visualize, and click a toggle to display age-adjusted statistics.*
 
----
+------------------------------------------------------------------------
 
 ## 4. Sticking points
 
 What could go wrong, and what have you already run into? Be specific — this section is where we help you before it becomes a week-three crisis.
 
-- **Known data quality issues** (missing values, inconsistent formats, merging multiple sources): *[...]*
-- **Feasibility risks** (data too small/large, API reliability, scope for 4+ callbacks and 2+ chart types): *[...]*
-- **Skills your team doesn't have yet** for this idea, and your plan to close that gap: *[...]*
-- **Fallback plan** if this dataset doesn't pan out: *[...]*
+- **Known data quality issues** (missing values, inconsistent formats, merging multiple sources): *\[...\]*
+- **Feasibility risks** (data too small/large, API reliability, scope for 4+ callbacks and 2+ chart types): *\[...\]*
+- **Skills your team doesn't have yet** for this idea, and your plan to close that gap: *\[...\]*
+- **Fallback plan** if this dataset doesn't pan out: *\[...\]*
 
-*[Write your response here]*
+*Data issues:*
 
----
+*Feasiblity risks: the data is decently large with over 3000 rows of data points to choose from. If this amount prove too untenable, we will have to cut the amount of data we use.*
+
+*Skills We Lack: Not every member has the exact knowledge on how to create a drop down menu or scatterplot,*
+
+*Fall back plan: We have an alternative dashboard plan focused on a real estate api telling the story of the housing affordability crisis in the US. the basic structure includes;* First Page: Summary
+
+- Three Cards at the top
+
+  - Median home price
+
+  - Home ownership rate
+
+- Two graphs below
+
+  - Chloropleth map of house price indices for every state (year slider, condos or homes)
+
+  - Case Shiller home price index (hover for value, button/hover for calculation / explanation)
+
+<!-- -->
+
+- Second Page: Macroeconomic Factors
+
+  - Two Cards at the top
+
+    - Number of new constructions last period
+
+  - One Graph below
+
+    - New constructions and mortgage rate
+
+- Third Page: Household level affordability
+
+  - Two Cards at the top
+
+    - Increase in home prices
+
+    - Increase in median income
+
+    - Increase in prices (CPI)
+
+  - One graph below
+
+    - Scatterplot of home prices and median income through time
+
+- Fourth Page: Where is it worst?
+
+  - One graph
+
+    - Bar chart of metro areas with the highest prices
+
+------------------------------------------------------------------------
 
 ## Feasibility self-check
 
 Check these honestly before submitting. An unchecked box isn't an automatic rejection — it's something to flag in Sticking Points above so we can talk it through.
 
-- [ ] Dataset/API is confirmed accessible right now (link opens, key obtained, or file downloaded)
-- [ ] Data includes at least one field that supports a real visualization (location, date/time, category, or numeric measure)
-- [ ] Data has enough rows/columns for meaningful filtering — not a 10-row toy table
-- [ ] We can name 2 distinct chart types this data would support (e.g., map + time series)
-- [ ] We can name 4 things a user could filter, select, or input that would change those charts
-- [ ] We have a fallback dataset in mind if this one falls through
-
+- [x] Dataset/API is confirmed accessible right now (link opens, key obtained, or file downloaded)
+- [x] Data includes at least one field that supports a real visualization (location, date/time, category, or numeric measure)
+- [x] Data has enough rows/columns for meaningful filtering — not a 10-row toy table
+- [x] We can name 2 distinct chart types this data would support (e.g., map + time series)
+- [x] We can name 4 things a user could filter, select, or input that would change those charts
+- [x] We have a fallback dataset in mind if this one falls through
