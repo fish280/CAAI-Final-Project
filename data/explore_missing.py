@@ -20,3 +20,12 @@ if "measure" in df.columns:
 print("\n=== Rows with a footnote explaining suppression ===")
 if "data_value_footnote" in df.columns:
     print(df["data_value_footnote"].value_counts(dropna=True))
+
+suppressed = df[df["data_value"].isna()]
+print(suppressed[["stateabbr", "locationname", "locationid"]].drop_duplicates())
+
+no_location = df[df["locationname"].isna()]
+print(no_location[["stateabbr", "locationid", "measure", "data_value_footnote"]].drop_duplicates())
+
+print(suppressed["data_value_type"].value_counts())
+print(no_location["stateabbr"].value_counts())
