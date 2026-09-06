@@ -57,7 +57,7 @@ What could go wrong, and what have you already run into? Be specific — this se
 - **Skills your team doesn't have yet** for this idea, and your plan to close that gap: *\[...\]*
 - **Fallback plan** if this dataset doesn't pan out: *\[...\]*
 
-*Data issues:*
+*Data issues: a few specific issues include 33 rows have NaN for both crude_prevalence and adj_prevalence — the least populous U.S. county, suppressed by CDC for sample size ("Estimates suppressed for population less than 50"). The 2025 release uses 2023 BRFSS data for most measures but 2022 data for 5 measures collected only every other year (all teeth lost, dental visits, mammograms, colorectal cancer screening, short sleep duration). `year` is not a single consistent value across the whole dataset — it varies by measure. Lastly, each measure carries two values: crude (raw observed rate) and age-adjusted (re-weighted to a standard age distribution). Charting them against each other is useful — counties where crude is much higher than adjusted are driven by an older population, not necessarily worse health outcomes or access; counties where adjusted is much higher than crude have a genuinely elevated rate despite not skewing old, which is the more actionable finding for targeting resources.*
 
 *Feasiblity risks: the data is decently large with over 3000 rows of data points to choose from. If this amount prove too untenable, we will have to cut the amount of data we use.*
 
@@ -65,49 +65,49 @@ What could go wrong, and what have you already run into? Be specific — this se
 
 *Fall back plan: We have an alternative dashboard plan focused on a real estate api telling the story of the housing affordability crisis in the US. the basic structure includes;* First Page: Summary
 
-- Three Cards at the top
+- *Three Cards at the top*
 
-  - Median home price
+  - *Median home price*
 
-  - Home ownership rate
+  - *Home ownership rate*
 
-- Two graphs below
+- *Two graphs below*
 
-  - Chloropleth map of house price indices for every state (year slider, condos or homes)
+  - *Chloropleth map of house price indices for every state (year slider, condos or homes)*
 
-  - Case Shiller home price index (hover for value, button/hover for calculation / explanation)
+  - *Case Shiller home price index (hover for value, button/hover for calculation / explanation)*
 
 <!-- -->
 
-- Second Page: Macroeconomic Factors
+- *Second Page: Macroeconomic Factors*
 
-  - Two Cards at the top
+  - *Two Cards at the top*
 
-    - Number of new constructions last period
+    - *Number of new constructions last period*
 
-  - One Graph below
+  - *One Graph below*
 
-    - New constructions and mortgage rate
+    - *New constructions and mortgage rate*
 
-- Third Page: Household level affordability
+- *Third Page: Household level affordability*
 
-  - Two Cards at the top
+  - *Two Cards at the top*
 
-    - Increase in home prices
+    - *Increase in home prices*
 
-    - Increase in median income
+    - *Increase in median income*
 
-    - Increase in prices (CPI)
+    - *Increase in prices (CPI)*
 
-  - One graph below
+  - *One graph below*
 
-    - Scatterplot of home prices and median income through time
+    - *Scatterplot of home prices and median income through time*
 
-- Fourth Page: Where is it worst?
+- *Fourth Page: Where is it worst?*
 
-  - One graph
+  - *One graph*
 
-    - Bar chart of metro areas with the highest prices
+    - *Bar chart of metro areas with the highest prices*
 
 ------------------------------------------------------------------------
 
