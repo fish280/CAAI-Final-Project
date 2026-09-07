@@ -14,7 +14,7 @@ import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
 
-from data_prep import va_raw, va_aa, DISEASES, COUNTY
+from data_prep import va_raw_health, va_aa_health, DISEASES, FIPS, COUNTY
 
 dash.register_page(__name__, path="/", name="Public Health Overview")
 
@@ -39,10 +39,12 @@ _counties_geojson["features"] = [
 # Colors pulled from styles.css so the map matches the rest of the site
 # (risk-low -> risk-mid -> risk-high).
 RISK_SCALE = [
-    [0.0, "#E1F0EA"],
-    [0.25, "#1F7A63"],
-    [0.55, "#C98A2E"],
-    [1.0, "#A8442E"],
+    [0.0, "#eaf5ef"],
+    [0.20, "#c7e4d5"],
+    [0.40, "#96ccb0"],
+    [0.60, "#5dae87"],
+    [0.80, "#2e8b62"],
+    [1.0, "#0f5c3d"],
 ]
 
 
@@ -123,7 +125,7 @@ def layout(**kwargs):
 )
 def update_map(selected_disease, adjustment_value):
     use_age_adjusted = "aa" in adjustment_value
-    source_df = va_aa if use_age_adjusted else va_raw
+    source_df = va_aa_health if use_age_adjusted else va_raw_health
     stat_label = (
         "Age-adjusted prevalence (%)" if use_age_adjusted else "Crude prevalence (%)"
     )
@@ -131,7 +133,7 @@ def update_map(selected_disease, adjustment_value):
     fig = px.choropleth(
         source_df,
         geojson=_counties_geojson,
-        locations=COUNTY,
+        locations=FIPS,
         color=selected_disease,
         color_continuous_scale=RISK_SCALE,
         labels={selected_disease: stat_label},
@@ -146,3 +148,4 @@ def update_map(selected_disease, adjustment_value):
         title_font_family="Spectral, Georgia, serif",
     )
     return fig
+
