@@ -47,6 +47,16 @@ RISK_SCALE = [
     [1.0, "#0f5c3d"],
 ]
 
+def _stat_card(card_id, label):
+    return html.Div(
+        className = "panel stat", 
+        children = [
+            html.Div(id=f"{card_id}-value", className = "stat__value", children = "-"), 
+            html.Div(label, className = "stat__label"), 
+            html.Div(id = f"{card_id}-delta", className = "stat__delta"),
+        ],
+    )
+
 
 def layout(**kwargs):
     return html.Div(
@@ -62,6 +72,16 @@ def layout(**kwargs):
                     ),
                 ],
             ),
+
+            html.Div(
+                className = "grid grid--3",
+                children = [
+                    _stat_card("VA-total", "Virginia %"), 
+                    _stat_card("gross-number", "Total Cases"), 
+                    _stat_card("county-rank", "Top Counties")
+                ],
+            ),
+
             html.Div(
                 className="panel",
                 children=[
@@ -138,6 +158,10 @@ def update_map(selected_disease, adjustment_value):
         color_continuous_scale=RISK_SCALE,
         labels={selected_disease: stat_label},
         hover_name=COUNTY,
+        hover_data = {
+            FIPS: False,
+            selected_disease: ":.1f"
+        },
     )
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_layout(
@@ -149,3 +173,38 @@ def update_map(selected_disease, adjustment_value):
     )
     return fig
 
+@dash.callback(
+    Output("state-avg-value", "children"),
+    Output("state-avg-delta", "children"),
+    Output("county-rank-value", "children"),
+    Output("county-rank-delta", "children"),
+    Output("card-three-value", "children"),
+    Output("card-three-delta", "children"),
+    Input("disease-dropdown", "value"),
+    Input("adjustment-toggle", "value"),
+)
+def update_stat_cards(selected_disease, adjustment_value):
+    use_age_adjusted = "aa" in adjustment_value
+    source_df = va_aa_health if use_age_adjusted else va_raw_health
+
+    #todo: state_avg = source_df[selected_disease].mean()
+    state_avg_value = "—"
+    state_avg_delta = ""
+
+    #todo: county rank needs a selected county from somewhere (a new
+    # dropdown, a click on the map, etc.) — not wired up yet.
+    county_rank_value = "—"
+    county_rank_delta = ""
+
+    #todo: pick a stat for card three and fill this in.
+    card_three_value = "—"
+    card_three_delta = ""
+
+    return (
+        state_avg_value,
+        state_avg_delta,
+        county_rank_value,
+        county_rank_delta,
+        card_three_value,
+        card_three_delta,
+    )

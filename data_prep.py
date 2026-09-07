@@ -9,21 +9,21 @@ df = pd.read_csv("data/places_county_clean.csv")
 FIPS = "locationid"
 COUNTY = "locationname"
 STATE = "statedesc"
-DISEASE = "measure"
+MEASURE = "measure"
 VALUE_AA = "adj_prevalence"
 VALUE_RAW = "crude_prevalence"
 
 #change data shape, age-adjusted
 df_aa = df.pivot_table(
     index=[FIPS, COUNTY, STATE],
-    columns=DISEASE,
+    columns=MEASURE,
     values=VALUE_AA,
 ).reset_index()
 
 #change data shape, crude
 df_raw = df.pivot_table(
     index=[FIPS, COUNTY, STATE],
-    columns=DISEASE,
+    columns=MEASURE,
     values=VALUE_RAW,
 ).reset_index()
 
@@ -31,7 +31,7 @@ df_raw = df.pivot_table(
 va_aa = df_aa[df_aa[STATE] == "Virginia"].copy()
 va_raw = df_raw[df_raw[STATE] == "Virginia"].copy()
 
-diseases = ["All teeth lost among adults aged >=65 years", 
+DISEASES = ["All teeth lost among adults aged >=65 years", 
                      "Arthritis among adults", 
                      "Cancer (non-skin) or melanoma among adults", 
                      "Chronic obstructive pulmonary disease among adults", 
@@ -68,11 +68,11 @@ risk_factors = ["Binge drinking among adults",
                                              "Short sleep duration among adults"]
 
 #just virginia, health measures
-va_aa_health = va_aa[[FIPS, COUNTY, STATE] + diseases].copy()
+va_aa_health = va_aa[[FIPS, COUNTY, STATE] + DISEASES].copy()
 #just virginia, includes health risk factors (incl disability and prevention measures), social risk factors
 va_aa_risk_and_social = va_aa[[FIPS, COUNTY, STATE] + risk_factors].copy()
 
-va_raw_health = va_raw[[FIPS, COUNTY, STATE] + diseases].copy()
+va_raw_health = va_raw[[FIPS, COUNTY, STATE] + DISEASES].copy()
 va_raw_risk_and_social = va_raw[[FIPS, COUNTY, STATE] + risk_factors].copy()
 
 
@@ -91,6 +91,5 @@ va_raw_risk_and_social = va_raw[[FIPS, COUNTY, STATE] + risk_factors].copy()
 va_raw[COUNTY] = va_raw[COUNTY].astype(str).str.zfill(5)
 va_aa[COUNTY] = va_aa[COUNTY].astype(str).str.zfill(5)
 
-# Disease list = every pivoted column except the two index columns
-DISEASES = sorted(c for c in va_raw.columns if c not in (COUNTY, STATE))
+
 
