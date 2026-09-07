@@ -33,7 +33,7 @@ Name the actual source — not "we'll find something." If you're not sure it wor
 - **Source name and link:** *"PLACES: County Data (GIS Friendly Format), 2025", https://data.cdc.gov/500-Cities-Places/PLACES-County-Data-GIS-Friendly-Format-2025-releas/i46a-9kgh/about_data*
 - **Format** (CSV, JSON, SQL table, REST API, etc.): *CSV*
 - **Rough size** (rows/columns, date range, or number of records): *3143 Counties, about 2950 with fully complete data. Specifically for 2025. 167 Variables*
-- **Access requirements** (API key, rate limits, cost, login): *No access requirements for the CSV*
+- **Access requirements** (API key, rate limits, cost, login): *No access requirements for the CSV or even the API*
 - **License/usage terms** (can you actually use and share this?): *CDC Data does not require a license for general use.*
 
 ------------------------------------------------------------------------
@@ -44,7 +44,8 @@ State 1–3 questions your dashboard will let a user explore — not just "show 
 
 **Which counties need help first, and why?** A ranked bar chart lets users pick a health measure and a state, then see counties sorted from worst to best : a fast way to answer "just tell me where to focus."
 
-*What variables are correlated with disease rates (either medical or social)? (like lack of insurance or physical inactivity)? Users can explore this with an interactive scatterplot: they choose a variable from a dropdown to visualize the relationships between that variable and disease rates. Where are different diseases most common? Users can explore this with an interactive chloropleth map, in which they can choose the disease to visualize, and click a toggle to display age-adjusted statistics.*
+**What variables are correlated with disease rates (either medical or social)? (like lack of insurance or physical inactivity)?** Users can explore this with an interactive scatterplot: they choose a variable from a dropdown to visualize the relationships between that variable and disease rates. 
+**Where are different diseases most common?** Users can explore this with an interactive chloropleth map, in which they can choose the disease to visualize, and click a toggle to display age-adjusted statistics.
 
 ------------------------------------------------------------------------
 
@@ -57,11 +58,13 @@ What could go wrong, and what have you already run into? Be specific — this se
 - **Skills your team doesn't have yet** for this idea, and your plan to close that gap: *\[...\]*
 - **Fallback plan** if this dataset doesn't pan out: *\[...\]*
 
-*Data issues: a few specific issues include 33 rows have NaN for both crude_prevalence and adj_prevalence — the least populous U.S. county, suppressed by CDC for sample size ("Estimates suppressed for population less than 50"). The 2025 release uses 2023 BRFSS data for most measures but 2022 data for 5 measures collected only every other year (all teeth lost, dental visits, mammograms, colorectal cancer screening, short sleep duration). `year` is not a single consistent value across the whole dataset — it varies by measure. Lastly, each measure carries two values: crude (raw observed rate) and age-adjusted (re-weighted to a standard age distribution). Charting them against each other is useful — counties where crude is much higher than adjusted are driven by an older population, not necessarily worse health outcomes or access; counties where adjusted is much higher than crude have a genuinely elevated rate despite not skewing old, which is the more actionable finding for targeting resources.*
+**Data issues:** 
+a few specific issues include 33 rows have NaN for both crude_prevalence and adj_prevalence — the least populous U.S. county, suppressed by CDC for sample size ("Estimates suppressed for population less than 50"). The 2025 release uses 2023 BRFSS data for most measures but 2022 data for 5 measures collected only every other year (all teeth lost, dental visits, mammograms, colorectal cancer screening, short sleep duration). `year` is not a single consistent value across the whole dataset — it varies by measure. Lastly, each measure carries two values: crude (raw observed rate) and age-adjusted (re-weighted to a standard age distribution). Charting them against each other is useful — counties where crude is much higher than adjusted are driven by an older population, not necessarily worse health outcomes or access; counties where adjusted is much higher than crude have a genuinely elevated rate despite not skewing old, which is the more actionable finding for targeting resources.*
 
-*Feasiblity risks: the data is decently large with over 3000 rows of data points to choose from. If this amount prove too untenable, we will have to cut the amount of data we use.*
 
-*Skills We Lack: Not every member has the exact knowledge on how to create a drop down menu or scatterplot,*
+*Feasiblity risks: the data is decently large with over 100,000 rows of data points to choose from. If this amount prove too untenable, we will have to cut the amount of data we use. we plan to limit our project to a few states then counties so that should help offset the large amounts of data*
+
+*Skills We Lack: Not every member has the exact knowledge on how to create a drop down menu or scatterplot, we plan on using claude to bridge this gap by combining our knowledge on the data and goal.*
 
 *Fall back plan: We have an alternative dashboard plan focused on a real estate api telling the story of the housing affordability crisis in the US. the basic structure includes;* First Page: Summary
 
