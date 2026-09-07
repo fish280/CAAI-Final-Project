@@ -1,0 +1,365 @@
+
+
+/* ==========================================================================
+   Virginia Public Health Atlas — Stylesheet
+   Pages: Public Health Overview / Drivers & Risk Factors /
+          Access & Social Determinants / Priority Counties
+   ========================================================================== */
+ 
+@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+ 
+:root {
+  /* ---- Color: base ---- */
+  --bg:            #F5F6F1;  /* off-white page background */
+  --panel:         #FBFAF6;  /* slightly lifted panel surface */
+  --bar:           #C9E4DA;  /* light tealish-green, top nav */
+  --bar-line:      #AFD3C6;  /* hairline under/within the nav */
+  --button:        #1F7A63;  /* medium tealish-green, same hue, deeper saturation */
+  --button-hover:  #175C4B;
+  --button-text:   #F5F6F1;
+ 
+  --ink:           #1C2B27;  /* primary text */
+  --muted:         #5C6D67;  /* secondary text */
+  --muted-2:       #86948E;  /* tertiary / placeholder text */
+  --line:          #D8DCD6;  /* hairline borders */
+  --line-strong:   #BFC7C1;
+ 
+  /* ---- Color: semantic risk scale (for future charts & badges) ---- */
+  --risk-low:      #1F7A63;
+  --risk-low-bg:   #E1F0EA;
+  --risk-mid:      #C98A2E;
+  --risk-mid-bg:   #F6EBD8;
+  --risk-high:     #A8442E;
+  --risk-high-bg:  #F3E1DC;
+ 
+  /* ---- Type ---- */
+  --font-display:  'Spectral', Georgia, 'Times New Roman', serif;
+  --font-ui:       'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+ 
+  --step--1:  0.875rem;
+  --step-0:   1rem;
+  --step-1:   1.125rem;
+  --step-2:   1.375rem;
+  --step-3:   1.75rem;
+  --step-4:   2.25rem;
+  --step-5:   2.875rem;
+ 
+  /* ---- Layout ---- */
+  --content-max: 72rem;
+  --gutter: 1.5rem;
+  --radius-interactive: 4px;
+  --radius-panel: 2px;
+}
+ 
+/* ---- Reset & base ---- */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+ 
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  font-feature-settings: "tnum" 1;
+}
+ 
+img, svg { max-width: 100%; display: block; }
+ 
+a { color: inherit; }
+ 
+/* ---- Typography ---- */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+  margin: 0 0 0.5em;
+}
+ 
+h1 { font-size: var(--step-5); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--step-4); }
+h3 { font-size: var(--step-3); }
+h4 { font-size: var(--step-2); font-weight: 500; }
+ 
+.dek {
+  font-family: var(--font-ui);
+  font-size: var(--step-1);
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 0 1.5rem;
+}
+ 
+p { max-width: 68ch; margin: 0 0 1rem; }
+ 
+.label {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: none; /* sentence case, not all-caps */
+  letter-spacing: 0;
+}
+ 
+.figure {
+  font-variant-numeric: tabular-nums;
+}
+ 
+/* ---- Skip link / accessibility ---- */
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.75rem 1rem;
+  z-index: 100;
+}
+.skip-link:focus { left: 1rem; top: 1rem; }
+ 
+:focus-visible {
+  outline: 2px solid var(--button);
+  outline-offset: 2px;
+}
+ 
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+ 
+/* ---- Layout shell ---- */
+.page-wrap {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+ 
+/* ---- Top nav bar ---- */
+.site-nav {
+  background: var(--bar);
+  border-bottom: 1px solid var(--bar-line);
+}
+ 
+.site-nav__inner {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0.85rem var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+ 
+.site-nav__mark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+}
+ 
+.site-nav__mark span {
+  display: block;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+ 
+.site-nav__links {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+ 
+.nav-btn {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--ink);
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--radius-interactive);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+ 
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+ 
+.nav-btn[aria-current="page"] {
+  background: var(--button);
+  color: var(--button-text);
+}
+ 
+.nav-btn[aria-current="page"]:hover {
+  background: var(--button-hover);
+}
+ 
+/* ---- Generic buttons (for in-page actions, filters, etc.) ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-weight: 500;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-interactive);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+ 
+.btn--primary {
+  background: var(--button);
+  color: var(--button-text);
+}
+.btn--primary:hover { background: var(--button-hover); }
+ 
+.btn--secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+.btn--secondary:hover { background: var(--panel); }
+ 
+/* ---- Page header ---- */
+.page-header {
+  padding: 3rem 0 2rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 2.5rem;
+}
+ 
+/* ---- Panel (flat container — no shadow, square corners) ---- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 1.5rem;
+}
+ 
+.panel + .panel { margin-top: 1.25rem; }
+ 
+.panel__title {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step-1);
+  margin: 0 0 1rem;
+}
+ 
+.grid {
+  display: grid;
+  gap: 1.25rem;
+}
+ 
+.grid--2 { grid-template-columns: repeat(2, 1fr); }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+ 
+@media (max-width: 780px) {
+  .grid--2, .grid--3 { grid-template-columns: 1fr; }
+  h1 { font-size: var(--step-4); }
+}
+ 
+/* ---- Stat block ---- */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+ 
+.stat__value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-4);
+  font-variant-numeric: tabular-nums;
+}
+ 
+.stat__label {
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+ 
+.stat__delta { font-size: var(--step--1); }
+.stat__delta--up { color: var(--risk-high); }
+.stat__delta--down { color: var(--risk-low); }
+ 
+/* ---- Table ---- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+ 
+.data-table caption {
+  text-align: left;
+  font-family: var(--font-ui);
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+ 
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--line);
+}
+ 
+.data-table th {
+  font-weight: 500;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+ 
+.data-table td.figure { font-variant-numeric: tabular-nums; }
+ 
+.data-table tbody tr:hover { background: rgba(31, 122, 99, 0.06); }
+ 
+/* ---- Risk badges ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-interactive);
+}
+ 
+.badge--low  { background: var(--risk-low-bg);  color: var(--risk-low); }
+.badge--mid  { background: var(--risk-mid-bg);  color: var(--risk-mid); }
+.badge--high { background: var(--risk-high-bg); color: var(--risk-high); }
+ 
+/* ---- Chart placeholder (until charts are wired up) ---- */
+.chart-placeholder {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-panel);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-2);
+  font-size: var(--step--1);
+  background: repeating-linear-gradient(
+    135deg, rgba(31,122,99,0.03), rgba(31,122,99,0.03) 8px,
+    transparent 8px, transparent 16px
+  );
+}
+ 
+/* ---- Footer ---- */
+.site-footer {
+  border-top: 1px solid var(--line);
+  margin-top: 4rem;
+  padding: 2rem 0 3rem;
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+ 
