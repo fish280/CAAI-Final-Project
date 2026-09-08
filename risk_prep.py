@@ -9,11 +9,6 @@ on each other. Page 3 can import from here too.
 Everything in this module is a pure transform of
 data/places_county_clean.csv — no network calls, no globals mutated
 by callbacks, so the helpers below are directly unit-testable.
-
-AI assistance: used Claude Code to draft the wide-pivot structure and
-the residual/correlation helper, then verified column names, the
-suppressed-county behavior, and the polyfit edge cases against the
-real CSV. -- SAMUEL: edit this line to reflect what you actually did.
 """
 
 from pathlib import Path
