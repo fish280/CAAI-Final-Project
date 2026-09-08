@@ -221,3 +221,4 @@ def worst_outlier(frame):
     if frame.empty or frame["residual"].abs().max() == 0:
         return None
     return frame.loc[frame["residual"].idxmax()]
+

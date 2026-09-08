@@ -45,7 +45,6 @@ from risk_prep import (
     worst_outlier,
 )
 
-from data_prep import DISEASES, risk_factors
 
 dash.register_page(
     __name__,
@@ -140,10 +139,7 @@ def layout(**kwargs):
                                            className="label", htmlFor="rf-x"),
                                 dcc.Dropdown(
                                     id="rf-x",
-                                    options = [
-                                        {"label":r, "value": r}
-                                        for r in risk_factors
-                                    ],
+                                    options = MEASURE_OPTIONS,
                                     value=DEFAULT_X, clearable=False,
                                 ),
                             ]),
@@ -152,10 +148,7 @@ def layout(**kwargs):
                                            className="label", htmlFor="rf-y"),
                                 dcc.Dropdown(
                                     id="rf-y",
-                                    options = [
-                                        {"label":d, "value":d}
-                                        for d in DISEASES
-                                    ],
+                                    options = MEASURE_OPTIONS,
                                     value=DEFAULT_Y, clearable=False,
                                 ),
                             ]),
@@ -309,6 +302,7 @@ def update_scatter(x_label, y_label, state, basis, trend):
     try:
         frame, stats = correlate(x_label, y_label, basis=basis, state=state)
     except ValueError as err:
+        import traceback; traceback.print_exc()
         blank = "—"
         return (_message_figure(str(err)), blank, "Correlation", blank,
                 "Counties plotted", blank, "Largest unexplained gap", "")
@@ -550,3 +544,4 @@ def download_watchlist(_n, rows):
         "basis": "prevalence_basis",
     })
     return dcc.send_data_frame(out.to_csv, "watchlist.csv", index=False)
+
