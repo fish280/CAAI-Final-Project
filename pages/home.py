@@ -132,7 +132,9 @@ def layout(**kwargs):
                 className="panel",
                 children=[
                     dcc.Graph(
-                        id="choropleth-map", config={"displayModeBar": False}
+                        id="choropleth-map", 
+                        config={"displayModeBar": False},
+                        style = {"width": "100%", "height": "650px"},
                     ),
                 ],
             ),
