@@ -45,6 +45,8 @@ from risk_prep import (
     worst_outlier,
 )
 
+from data_prep import DISEASES, risk_factors
+
 dash.register_page(
     __name__,
     path="/drivers_and_risk_factors",
@@ -137,7 +139,11 @@ def layout(**kwargs):
                                 html.Label("Driver — horizontal axis",
                                            className="label", htmlFor="rf-x"),
                                 dcc.Dropdown(
-                                    id="rf-x", options=MEASURE_OPTIONS,
+                                    id="rf-x",
+                                    options = [
+                                        {"label":r, "value": r}
+                                        for r in risk_factors
+                                    ],
                                     value=DEFAULT_X, clearable=False,
                                 ),
                             ]),
@@ -145,7 +151,11 @@ def layout(**kwargs):
                                 html.Label("Outcome — vertical axis",
                                            className="label", htmlFor="rf-y"),
                                 dcc.Dropdown(
-                                    id="rf-y", options=MEASURE_OPTIONS,
+                                    id="rf-y",
+                                    options = [
+                                        {"label":d, "value":d}
+                                        for d in DISEASES
+                                    ],
                                     value=DEFAULT_Y, clearable=False,
                                 ),
                             ]),

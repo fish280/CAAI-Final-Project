@@ -14,7 +14,7 @@ app.layout = html.Div([
             className="site-nav__inner",
             children=[
                 html.A(
-                    "Public Health Dashboard",
+                    "Virginia Public Health",
                     className="site-nav__mark",
                     href="/",
                 ),

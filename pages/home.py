@@ -15,7 +15,7 @@ from dash import dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
 
-from data_prep import va_raw_health, va_aa_health, DISEASES, FIPS, COUNTY
+from data_prep import df_raw, df_aa, DISEASES, FIPS, COUNTY
 
 dash.register_page(__name__, path="/", name="Public Health Overview")
 
@@ -31,11 +31,6 @@ GEOJSON_URL = (
 with urllib.request.urlopen(GEOJSON_URL) as resp:
     _counties_geojson = json.load(resp)
 
-# Virginia's state FIPS prefix is "51" — trim to just VA counties.
-_counties_geojson["features"] = [
-    feat for feat in _counties_geojson["features"]
-    if feat["properties"]["STATE"] == "51"
-]
 
 # Colors pulled from styles.css so the map matches the rest of the site
 # (risk-low -> risk-mid -> risk-high).
@@ -152,7 +147,7 @@ def layout(**kwargs):
 )
 def update_map(selected_disease, adjustment_value):
     use_age_adjusted = "aa" in adjustment_value
-    source_df = va_aa_health if use_age_adjusted else va_raw_health
+    source_df = df_aa if use_age_adjusted else df_raw
     stat_label = (
         "Age-adjusted prevalence (%)" if use_age_adjusted else "Crude prevalence (%)"
     )
@@ -192,9 +187,9 @@ def update_map(selected_disease, adjustment_value):
 )
 def update_stat_cards(selected_disease, adjustment_value, clickData):
     use_age_adjusted = "aa" in adjustment_value
-    source_df = va_aa_health if use_age_adjusted else va_raw_health
+    source_df = df_aa if use_age_adjusted else df_raw
 
-    POPULATION = "population"  # swap in whatever column name you ended up with
+    POPULATION = "totalpopulation"  # swap in whatever column name you ended up with
     valid = source_df[[selected_disease, POPULATION]].dropna()
     weighted_avg = (valid[selected_disease] * valid[POPULATION]).sum() / valid[POPULATION].sum()
     state_avg_value = f"{weighted_avg:.1f}%"
