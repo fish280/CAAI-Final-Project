@@ -71,6 +71,11 @@ MEASURE_OPTIONS = [
     for label, row in MEASURE_META.iterrows()
 ]
 
+DRIVER_LABELS = list(MEASURE_META[MEASURE_META["category"] != "Health Outcomes"].index)
+OUTCOME_LABELS = list(MEASURE_META[MEASURE_META["category"] == "Health Outcomes"].index)
+
+print(MEASURE_OPTIONS)
+
 # --------------------------------------------------------------------
 # Wide frames: one row per county, one column per measure
 # --------------------------------------------------------------------
@@ -222,3 +227,4 @@ def worst_outlier(frame):
         return None
     return frame.loc[frame["residual"].idxmax()]
 
+#print(MEASURE_OPTIONS)
