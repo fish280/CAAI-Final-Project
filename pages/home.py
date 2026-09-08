@@ -172,6 +172,8 @@ def update_map(selected_disease, adjustment_value):
         coloraxis_colorbar_title=stat_label,
         title=f"{selected_disease} — {stat_label}",
         title_font_family="Spectral, Georgia, serif",
+        height = 650, 
+        autosize = True,
     )
     return fig
 
