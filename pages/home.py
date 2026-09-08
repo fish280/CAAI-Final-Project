@@ -167,7 +167,11 @@ def update_map(selected_disease, adjustment_value):
             selected_disease: ":.1f"
         },
     )
-    fig.update_geos(fitbounds="locations", visible=False)
+    fig.update_geos(
+         scope = "usa",  
+         projection_type = "albers usa", 
+         visible = False,
+    )
     fig.update_layout(
         margin={"r": 0, "t": 60, "l": 0, "b": 0},
         font_family="IBM Plex Sans, -apple-system, sans-serif",
