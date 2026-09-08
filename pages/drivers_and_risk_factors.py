@@ -38,6 +38,8 @@ from risk_prep import (
     ALL_STATES,
     BASIS_LABELS,
     MEASURE_OPTIONS,
+    DRIVER_LABELS, 
+    OUTCOME_LABELS,
     STATE_OPTIONS,
     correlate,
     describe_strength,
@@ -139,7 +141,7 @@ def layout(**kwargs):
                                            className="label", htmlFor="rf-x"),
                                 dcc.Dropdown(
                                     id="rf-x",
-                                    options = MEASURE_OPTIONS,
+                                    options = DRIVER_LABELS,
                                     value=DEFAULT_X, clearable=False,
                                 ),
                             ]),
@@ -148,7 +150,7 @@ def layout(**kwargs):
                                            className="label", htmlFor="rf-y"),
                                 dcc.Dropdown(
                                     id="rf-y",
-                                    options = MEASURE_OPTIONS,
+                                    options = OUTCOME_LABELS,
                                     value=DEFAULT_Y, clearable=False,
                                 ),
                             ]),
