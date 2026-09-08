@@ -121,6 +121,22 @@ def measure_year(label: str) -> int:
     five collected every other year."""
     return int(MEASURE_META.loc[label, "year"])
 
+def measure_subtitle(label: str) -> str:    
+    """Plain-English definition of a measure, straight from CDC's own
+    question wording -- e.g. "Physical Inactivity" -> "No leisure-time
+    physical activity among adults". This is what actually clears up
+    labels that read as a double negative ("Physical Inactivity",
+    "Lack of Health Insurance") or hide their denominator ("High
+    Cholesterol" is only among adults ever screened, not all adults).
+
+    Meant to be shown under ANY measure dropdown, on ANY page -- not
+    specific to the Drivers & Risk Factors page. Import this wherever
+    a user picks a measure from risk_prep.MEASURE_OPTIONS.
+    """
+    text = str(MEASURE_META.loc[label, "measure"])
+    return text[:1].upper() + text[1:]
+
+
 
 def correlate(x_label, y_label, basis="crude", state=ALL_STATES):
     """Build the plotting frame for one X/Y measure pair.

@@ -38,14 +38,16 @@ from risk_prep import (
     ALL_STATES,
     BASIS_LABELS,
     MEASURE_OPTIONS,
-    DRIVER_LABELS, 
+    DRIVER_LABELS,
     OUTCOME_LABELS,
     STATE_OPTIONS,
     correlate,
     describe_strength,
+    measure_subtitle,
     measure_year,
     worst_outlier,
 )
+from ui_notes import crude_adjusted_note
 
 
 dash.register_page(
@@ -143,7 +145,10 @@ def layout(**kwargs):
                                     id="rf-x",
                                     options = DRIVER_LABELS,
                                     value=DEFAULT_X, clearable=False,
-                                ),
+                                ),                               
+                                html.Div(id="rf-x-subtitle",
+                                        className="stat__label",
+                                        style={"marginTop": "0.4rem"}),
                             ]),
                             html.Div([
                                 html.Label("Outcome — vertical axis",
@@ -153,7 +158,10 @@ def layout(**kwargs):
                                     options = OUTCOME_LABELS,
                                     value=DEFAULT_Y, clearable=False,
                                 ),
-                            ]),
+                                html.Div(id="rf-y-subtitle",
+                                        className="stat__label",
+                                        style={"marginTop": "0.4rem"}),
+                                        ]),                        
                         ],
                     ),
                     html.Div(
@@ -183,6 +191,7 @@ def layout(**kwargs):
                                     labelStyle={"marginRight": "1rem"},
                                     style={"marginTop": "0.5rem"},
                                 ),
+                                crude_adjusted_note(),
                             ]),
                             html.Div([
                                 html.Span("Chart options", className="label"),
@@ -375,7 +384,7 @@ def update_scatter(x_label, y_label, state, basis, trend):
     r_label = describe_strength(r)
 
     n_value = f"{stats['n']:,}"
-    n_label = f"of {scope}, bubble size = adult population"
+    n_label = f"of {scope}, bubble size = adult population, 18+"
 
     top = worst_outlier(frame)
     if top is None:
@@ -399,6 +408,17 @@ def update_scatter(x_label, y_label, state, basis, trend):
 
     return (fig, r_value, r_label, n_value, n_label,
             out_value, out_label, note)
+
+@callback(
+    Output("rf-x-subtitle", "children"),
+    Output("rf-y-subtitle", "children"),
+    Input("rf-x", "value"),
+    Input("rf-y", "value"),
+)
+def update_axis_subtitles(x_label, y_label):
+    x_sub = measure_subtitle(x_label) if x_label else ""
+    y_sub = measure_subtitle(y_label) if y_label else ""
+    return x_sub, y_sub
 
 
 # ====================================================================
