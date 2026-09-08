@@ -249,6 +249,10 @@ p { max-width: 68ch; margin: 0 0 1rem; }
 }
  
 .panel + .panel { margin-top: 1.25rem; }
+
+.grid > .panel {
+  margin-top: 0;
+}
  
 .panel__title {
   font-family: var(--font-ui);
@@ -275,6 +279,7 @@ p { max-width: 68ch; margin: 0 0 1rem; }
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  min-width: 0;
 }
  
 .stat__value {
@@ -285,11 +290,11 @@ p { max-width: 68ch; margin: 0 0 1rem; }
 }
  
 .stat__label {
-  font-size: var(--step--1);
+  font-size: var(--step-2);
   color: var(--muted);
 }
  
-.stat__delta { font-size: var(--step--1); }
+.stat__delta { font-size: var(--step-2); }
 .stat__delta--up { color: var(--risk-high); }
 .stat__delta--down { color: var(--risk-low); }
  

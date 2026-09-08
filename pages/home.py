@@ -13,6 +13,7 @@ import urllib.request
 import dash
 from dash import dcc, html, Input, Output
 import plotly.express as px
+import pandas as pd
 
 from data_prep import va_raw_health, va_aa_health, DISEASES, FIPS, COUNTY
 
@@ -77,8 +78,14 @@ def layout(**kwargs):
                 className = "grid grid--3",
                 children = [
                     _stat_card("VA-total", "Virginia %"), 
-                    _stat_card("gross-number", "Total Cases"), 
-                    _stat_card("county-rank", "Top Counties")
+                    _stat_card("county-rank", "Selected County Rank"), 
+                    html.Div(
+                         className = "panel stat", 
+                         children = [
+                              html.Div("Highest prevalence", className = "stat__label"), 
+                              html.Ol(id = "top-counties-list", className = "top-counties-list"),
+                         ],
+                    ),
                 ],
             ),
 
@@ -165,7 +172,7 @@ def update_map(selected_disease, adjustment_value):
     )
     fig.update_geos(fitbounds="locations", visible=False)
     fig.update_layout(
-        margin={"r": 0, "t": 10, "l": 0, "b": 0},
+        margin={"r": 0, "t": 60, "l": 0, "b": 0},
         font_family="IBM Plex Sans, -apple-system, sans-serif",
         coloraxis_colorbar_title=stat_label,
         title=f"{selected_disease} — {stat_label}",
@@ -174,37 +181,55 @@ def update_map(selected_disease, adjustment_value):
     return fig
 
 @dash.callback(
-    Output("state-avg-value", "children"),
-    Output("state-avg-delta", "children"),
+    Output("VA-total-value", "children"),
+    Output("VA-total-delta", "children"),
     Output("county-rank-value", "children"),
     Output("county-rank-delta", "children"),
-    Output("card-three-value", "children"),
-    Output("card-three-delta", "children"),
+    Output("top-counties-list", "children"),
     Input("disease-dropdown", "value"),
     Input("adjustment-toggle", "value"),
+    Input("choropleth-map", "clickData"),
 )
-def update_stat_cards(selected_disease, adjustment_value):
+def update_stat_cards(selected_disease, adjustment_value, clickData):
     use_age_adjusted = "aa" in adjustment_value
     source_df = va_aa_health if use_age_adjusted else va_raw_health
 
-    #todo: state_avg = source_df[selected_disease].mean()
-    state_avg_value = "—"
-    state_avg_delta = ""
+    POPULATION = "population"  # swap in whatever column name you ended up with
+    valid = source_df[[selected_disease, POPULATION]].dropna()
+    weighted_avg = (valid[selected_disease] * valid[POPULATION]).sum() / valid[POPULATION].sum()
+    state_avg_value = f"{weighted_avg:.1f}%"
+    state_avg_delta = "Population-weighted"
 
-    #todo: county rank needs a selected county from somewhere (a new
-    # dropdown, a click on the map, etc.) — not wired up yet.
-    county_rank_value = "—"
-    county_rank_delta = ""
+    if clickData is not None:
+        selected_fips = clickData["points"][0]["location"]
+        county_row = source_df[source_df[FIPS] == selected_fips]
+    else:
+            county_row = pd.DataFrame()
 
-    #todo: pick a stat for card three and fill this in.
-    card_three_value = "—"
-    card_three_delta = ""
+    if not county_row.empty:
+        selected_county = county_row[COUNTY].iloc[0]
+
+        ranks = source_df[selected_disease].rank(ascending = False, method = "min")
+        county_rank = int(ranks.loc[county_row.index[0]])
+        total_counties = source_df[selected_disease].notna().sum()
+
+        county_rank_value = selected_county
+        county_rank_delta = f"Rank {county_rank} of {total_counties}"
+    else:
+         county_rank_value = "-"
+         county_rank_delta = "Click a county of the map"
+
+    top3 = source_df.nlargest(3, selected_disease)
+    top_counties_children = [
+        html.Li(f"{row[COUNTY]} - {row[selected_disease]:.1f}%")
+        for _, row in top3.iterrows()
+    ]
+    
 
     return (
-        state_avg_value,
+        state_avg_value, 
         state_avg_delta,
         county_rank_value,
         county_rank_delta,
-        card_three_value,
-        card_three_delta,
+        top_counties_children
     )

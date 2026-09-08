@@ -4,6 +4,7 @@
 import pandas as pd
 
 df = pd.read_csv("data/places_county_clean.csv")
+df_pop = pd.read_excel("data/va_county_populations.xlsx")
 
 #name variables
 FIPS = "locationid"
@@ -12,6 +13,8 @@ STATE = "statedesc"
 MEASURE = "measure"
 VALUE_AA = "adj_prevalence"
 VALUE_RAW = "crude_prevalence"
+
+df[FIPS] = df[FIPS].astype(str).str.zfill(5)
 
 #change data shape, age-adjusted
 df_aa = df.pivot_table(
@@ -27,9 +30,25 @@ df_raw = df.pivot_table(
     values=VALUE_RAW,
 ).reset_index()
 
+
 #limit to just va
 va_aa = df_aa[df_aa[STATE] == "Virginia"].copy()
 va_raw = df_raw[df_raw[STATE] == "Virginia"].copy()
+
+va_aa = va_aa.merge(
+    df_pop[["county", "population"]],
+    left_on=COUNTY,
+    right_on="county",
+    how="left",
+).drop(columns="county")
+
+va_raw = va_raw.merge(
+    df_pop[["county", "population"]],
+    left_on=COUNTY,
+    right_on="county",
+    how="left",
+).drop(columns="county")
+
 
 DISEASES = ["All teeth lost among adults aged >=65 years", 
                      "Arthritis among adults", 
@@ -68,12 +87,12 @@ risk_factors = ["Binge drinking among adults",
                                              "Short sleep duration among adults"]
 
 #just virginia, health measures
-va_aa_health = va_aa[[FIPS, COUNTY, STATE] + DISEASES].copy()
+va_aa_health = va_aa[[FIPS, COUNTY, STATE, "population"] + DISEASES].copy()
 #just virginia, includes health risk factors (incl disability and prevention measures), social risk factors
-va_aa_risk_and_social = va_aa[[FIPS, COUNTY, STATE] + risk_factors].copy()
+va_aa_risk_and_social = va_aa[[FIPS, COUNTY, STATE, "population"] + risk_factors].copy()
 
-va_raw_health = va_raw[[FIPS, COUNTY, STATE] + DISEASES].copy()
-va_raw_risk_and_social = va_raw[[FIPS, COUNTY, STATE] + risk_factors].copy()
+va_raw_health = va_raw[[FIPS, COUNTY, STATE, "population"] + DISEASES].copy()
+va_raw_risk_and_social = va_raw[[FIPS, COUNTY, STATE, "population"] + risk_factors].copy()
 
 
 
@@ -92,4 +111,4 @@ va_raw[COUNTY] = va_raw[COUNTY].astype(str).str.zfill(5)
 va_aa[COUNTY] = va_aa[COUNTY].astype(str).str.zfill(5)
 
 
-
+print(va_aa[va_aa["population"].isna()][COUNTY])
