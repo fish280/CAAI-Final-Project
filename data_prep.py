@@ -70,7 +70,10 @@ risk_factors = ["Binge drinking among adults",
 
 
 
-
+ALL_STATES = "__ALL__"
+STATE_OPTIONS = [{"label": "All states (national)", "value": ALL_STATES}] + [
+    {"label": s, "value": s} for s in sorted(df[STATE].unique())
+]
 
 
 
