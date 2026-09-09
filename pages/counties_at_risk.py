@@ -11,7 +11,22 @@ DISEASE_LABELS = list(MEASURE_META[MEASURE_META["category"] == "Health Outcomes"
 RISK_FACTOR_LABELS = list(MEASURE_META[MEASURE_META["category"] != "Health Outcomes"].index)
 
 STATE_ONLY_OPTIONS = [opt for opt in STATE_OPTIONS if opt["value"] != ALL_STATES]
-DEFAULT_STATE = STATE_ONLY_OPTIONS[0]["value"] if STATE_ONLY_OPTIONS else None
+
+# Open on Virginia to match the Drivers page rather than on Alabama,
+# which is only first because the list is alphabetical.
+_STATE_VALUES = [opt["value"] for opt in STATE_ONLY_OPTIONS]
+DEFAULT_STATE = (
+    "Virginia" if "Virginia" in _STATE_VALUES
+    else (_STATE_VALUES[0] if _STATE_VALUES else None)
+)
+
+# Open on diabetes rather than whatever sorts first alphabetically ("All
+# Teeth Lost"), matching the other pages. Falls back to the first label
+# if a future CDC release renames this one.
+DEFAULT_DISEASE = (
+    "Diabetes" if "Diabetes" in DISEASE_LABELS
+    else (DISEASE_LABELS[0] if DISEASE_LABELS else None)
+)
 
 TOP_N_COUNTIES = 5
 TOP_N_TAGS = 3
@@ -59,7 +74,7 @@ def layout(**kwargs):
                                     dcc.Dropdown(
                                         id="arc-disease",
                                         options=[{"label": d, "value": d} for d in DISEASE_LABELS],
-                                        value=DISEASE_LABELS[0] if DISEASE_LABELS else None,
+                                        value=DEFAULT_DISEASE,
                                         clearable=False,
                                     ),
                                 ]

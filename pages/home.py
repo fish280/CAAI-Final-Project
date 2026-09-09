@@ -52,25 +52,130 @@ RISK_SCALE = [
     [1.0, "#0f5c3d"],
 ]
 
+# Open on diabetes rather than whatever sorts first alphabetically ("All
+# Teeth Lost"), so the page lands on a measure people recognise and the
+# orientation figure reads as a real headline. Falls back to the first
+# measure if a future CDC release renames this one.
+DEFAULT_DISEASE = (
+    "Diagnosed diabetes among adults"
+    if "Diagnosed diabetes among adults" in DISEASES else DISEASES[0]
+)
+
+
+# The four pages, restated as the question each one answers. "Drivers &
+# Risk Factors" and "Access & Social Determinants" are CDC vocabulary a
+# first-time visitor does not have; these are the plain-English version.
+DOORS = [
+    {
+        "n": "01 · YOU ARE HERE",
+        "q": "Where is it most common?",
+        "body": "See every county at once on the map, or narrow to one state.",
+        "go": "Below on this page ↓",
+        "href": None,
+    },
+    {
+        "n": "02",
+        "q": "Is the rate explained by risk factors?",
+        "body": "Plot a risk factor against an outcome and find the counties "
+                "that break the pattern.",
+        "go": "Drivers & Risk Factors →",
+        "href": "/drivers_and_risk_factors",
+    },
+    {
+        "n": "03",
+        "q": "Who can't get care, and why?",
+        "body": "Insurance and checkup gaps beside food, housing and "
+                "transport strain.",
+        "go": "Access & Social Determinants →",
+        "href": "/access_and_social_determinants",
+    },
+    {
+        "n": "04",
+        "q": "Who should get help first?",
+        "body": "The five worst counties for a condition, each tagged with "
+                "what's driving it.",
+        "go": "At-Risk Counties →",
+        "href": "/at_risk_counties",
+    },
+]
+
+
+def _door(spec):
+    """One route card. The card for this page is inert; the others link."""
+    inner = [
+        html.Div(spec["n"], className="door__n"),
+        html.Div(spec["q"], className="door__q"),
+        html.P(spec["body"], className="door__body"),
+        html.Div(spec["go"], className="door__go"),
+    ]
+    if spec["href"] is None:
+        return html.Div(className="door door--here", children=inner)
+    return dcc.Link(className="door", href=spec["href"], children=inner)
+
+
 def layout(**kwargs):
     return html.Div(
         className="page-wrap",
         children=[
+            # ---------------- Orientation band ----------------
             html.Div(
-                className="page-header",
+                className="welcome",
                 children=[
-                    html.H1("Where a condition is most common"),
-                    html.P(
-                        "Pick a measure to see every U.S. county at once, or "
-                        "narrow to a single state. Each figure is the share of "
-                        "adults affected — not a case count — so a county of "
-                        "2,000 and a county of 2 million compare on the same "
-                        "footing.",
-                        className="dek",
+                    html.Div(
+                        className="welcome__row",
+                        children=[
+                            html.Div([
+                                html.Div("County health, one county at a time",
+                                         className="welcome__kicker"),
+                                html.H1(
+                                    "National averages hide the places that "
+                                    "need help.",
+                                    className="welcome__title",
+                                ),
+                                html.P(
+                                    "This atlas breaks 40 CDC health measures "
+                                    "down to all 3,144 U.S. counties, so a "
+                                    "health department deciding where to send "
+                                    "limited funding can see the geography "
+                                    "instead of a single national figure.",
+                                    className="welcome__lede",
+                                ),
+                            ]),
+                            # The national figure beside the county spread it
+                            # hides -- filled by update_snapshot() so it stays
+                            # true for whichever measure is selected.
+                            html.Div(
+                                className="snapshot",
+                                children=[
+                                    html.Div(id="snapshot-figure",
+                                             className="snapshot__fig",
+                                             children="—"),
+                                    html.Div(id="snapshot-caption",
+                                             className="snapshot__cap"),
+                                    html.Div(id="snapshot-spread",
+                                             className="snapshot__sub"),
+                                ],
+                            ),
+                        ],
                     ),
-                    prevalence_note(),
                 ],
             ),
+
+            html.Div(className="doors", children=[_door(d) for d in DOORS]),
+
+            # ---------------- The tool ----------------
+            html.Div(
+                className="toolhead",
+                children=[
+                    html.H2("Where a condition is most common"),
+                    html.Span(
+                        "Each figure is the share of adults affected, not a "
+                        "case count",
+                        className="toolhead__note",
+                    ),
+                ],
+            ),
+            html.Div(prevalence_note(), style={"marginBottom": "1rem"}),
 
             # ---------------- Controls ----------------
             html.Div(
@@ -93,7 +198,7 @@ def layout(**kwargs):
                                              "value": d}
                                             for d in DISEASES
                                         ],
-                                        value=DISEASES[0],
+                                        value=DEFAULT_DISEASE,
                                         clearable=False,
                                     ),
                                     # CDC's own full wording, which is where
@@ -190,6 +295,52 @@ def layout(**kwargs):
             estimate_caveats(),
         ],
     )
+
+
+@dash.callback(
+    Output("snapshot-figure", "children"),
+    Output("snapshot-caption", "children"),
+    Output("snapshot-spread", "children"),
+    Input("disease-dropdown", "value"),
+    Input("adjustment-toggle", "value"),
+)
+def update_snapshot(selected_disease, adjustment_value):
+    """The orientation figure: the national rate beside the county spread
+    it hides. Always national, whatever the state filter says -- this is
+    context for the whole app, not a readout of the current selection.
+    Recomputed per measure so it never states a number that has stopped
+    being true.
+    """
+    if not selected_disease:
+        return "—", "", ""
+
+    use_age_adjusted = "aa" in (adjustment_value or [])
+    source_df = df_aa if use_age_adjusted else df_raw
+
+    valid = source_df[[selected_disease, "totalpopulation"]].dropna()
+    if valid.empty:
+        return "—", "No data reported for this measure", ""
+
+    weighted = (
+        (valid[selected_disease] * valid["totalpopulation"]).sum()
+        / valid["totalpopulation"].sum()
+    )
+    low = valid[selected_disease].min()
+    high = valid[selected_disease].max()
+
+    # Deliberately does NOT say "of U.S. adults": some measures have a
+    # narrower denominator (High Cholesterol counts only adults ever
+    # screened, All Teeth Lost only 65+). The measure's own wording is
+    # shown under the dropdown, where it states its own denominator.
+    caption = "U.S. rate, weighted by county population"
+    if use_age_adjusted:
+        caption = "U.S. rate, age-adjusted and population-weighted"
+
+    spread = (
+        f"County rates run from {low:.1f}% to {high:.1f}% — a spread that "
+        f"one national number erases."
+    )
+    return f"{weighted:.1f}%", caption, spread
 
 
 @dash.callback(
