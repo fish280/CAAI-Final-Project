@@ -30,7 +30,14 @@ df_raw = df.pivot_table(
     values=VALUE_RAW,
 ).reset_index()
 
-DISEASES = ["All teeth lost among adults aged >=65 years", 
+# The other three pages label measures with CDC's short text ("Diabetes")
+# while this page's dataframes are keyed on the full sentence
+# ("Diagnosed diabetes among adults"). Map between them so the dropdown
+# here reads the same as the dropdowns everywhere else, without changing
+# what the columns are actually called.
+SHORT_LABELS = dict(zip(df[MEASURE], df["short_question_text"]))
+
+DISEASES = ["All teeth lost among adults aged >=65 years",
                      "Arthritis among adults", 
                      "Cancer (non-skin) or melanoma among adults", 
                      "Chronic obstructive pulmonary disease among adults", 

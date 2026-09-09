@@ -3,6 +3,7 @@ from dash import dcc, html, Input, Output
 import pandas as pd
 
 from risk_prep import WIDE_CRUDE, MEASURE_META, STATE_OPTIONS, ALL_STATES
+from ui_notes import estimate_caveats
 
 dash.register_page(__name__, path = "/at_risk_counties", name = "At Risk Counties")
 
@@ -68,15 +69,22 @@ def layout(**kwargs):
                 ],
             ),
             html.Div(id="arc-leaderboard", className="panel"),
+
+            # This page ranks counties, so the small-county uncertainty
+            # point matters here more than anywhere else in the app.
+            estimate_caveats(),
         ],
     )
 
-def _tier_style(pct_above):
+def _tier_class(pct_above):
+    """How far above the state average this risk factor sits, as a tier.
+    Colors live in styles.css (.tag--high/mid/low) so they stay in step
+    with the badges and readouts on the other pages."""
     if pct_above >= 50:
-        return {"background": "#F3E1DC", "color": "#A8442E"}
+        return "tag tag--high"
     if pct_above >= 20:
-        return {"background": "#F6EBD8", "color": "#C98A2E"}
-    return {"background": "#E1F0EA", "color": "#1F7A63"}
+        return "tag tag--mid"
+    return "tag tag--low"
 
 @dash.callback(
     Output("arc-leaderboard", "children"),
@@ -120,15 +128,7 @@ def update_leaderboard(selected_state, selected_disease):
         top_tags = sorted(deviations, key=lambda t: t[2], reverse=True)[:TOP_N_TAGS]
 
         tags = [
-            html.Span(
-                f"{label} {value:.1f}%",
-                style={
-                    "fontSize": "11px",
-                    "padding": "2px 8px",
-                    "borderRadius": "10px",
-                    **_tier_style(pct_above),
-                },
-            )
+            html.Span(f"{label} {value:.1f}%", className=_tier_class(pct_above))
             for label, value, pct_above in top_tags
         ]
 

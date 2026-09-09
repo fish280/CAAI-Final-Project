@@ -52,6 +52,7 @@ from access_prep import (
     get_top_vulnerable_counties,
     get_total_counties,
 )
+from ui_notes import estimate_caveats, readout, readout_cell
 
 dash.register_page(
     __name__,
@@ -407,25 +408,20 @@ def layout(**kwargs):
                             ],
                         ),
 
-                        # --- Stat cards ---
-                        html.Div(
-                            className="panel",
-                            children=[
-                                html.Div(
-                                    className="grid grid--2",
-                                    children=[
-                                        _stat("access-stat-avg-value",
-                                              "access-stat-avg-label", "Average gap"),
-                                        _stat("access-stat-worst-value",
-                                              "access-stat-worst-label", "Biggest gap"),
-                                    ],
-                                ),
-                            ],
-                        ),
+                        # --- Readout, flush on top of the chart ---
+                        readout([
+                            readout_cell(value_id="access-stat-avg-value",
+                                         label_id="access-stat-avg-label",
+                                         label="Average gap"),
+                            readout_cell(value_id="access-stat-worst-value",
+                                         label_id="access-stat-worst-label",
+                                         label="Biggest gap",
+                                         value_class="readout__value--risk"),
+                        ], attached=True),
 
                         # --- Chart panel ---
                         html.Div(
-                            className="panel",
+                            className="panel panel--attached",
                             children=[
                                 html.H4(id="access-chart-title",
                                         className="panel__title",
@@ -449,6 +445,9 @@ def layout(**kwargs):
                     ]),
                 ],
             ),
+
+            # Limits to carry away -- last thing on the page.
+            estimate_caveats(),
         ],
     )
 

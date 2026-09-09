@@ -47,8 +47,21 @@ from risk_prep import (
     measure_year,
     worst_outlier,
 )
-from ui_notes import crude_adjusted_note
+from ui_notes import (
+    correlation_caveats,
+    crude_adjusted_note,
+    diverging_legend,
+    prevalence_note,
+    readout,
+    readout_cell,
+)
 
+# The diverging ramp, as a CSS gradient, so the HTML legend below the
+# chart matches RESIDUAL_SCALE exactly.
+RESIDUAL_GRADIENT = (
+    "linear-gradient(to right, #1F7A63 0%, #E1F0EA 35%, "
+    "#F5F6F1 50%, #F3E1DC 65%, #A8442E 100%)"
+)
 
 dash.register_page(
     __name__,
@@ -80,17 +93,6 @@ MUTED = "#5C6D67"
 FONT_UI = "IBM Plex Sans, -apple-system, Segoe UI, sans-serif"
 
 
-def _stat(value_id, label_id, label_text, value_text="—"):
-    """One card in the live stat strip."""
-    return html.Div(
-        className="stat",
-        children=[
-            html.Div(value_text, id=value_id, className="stat__value figure"),
-            html.Div(label_text, id=label_id, className="stat__label"),
-        ],
-    )
-
-
 def _message_figure(text):
     """Empty-state figure. Used for an invalid pair or an empty filter,
     so the user gets an explanation instead of a blank rectangle."""
@@ -120,14 +122,15 @@ def layout(**kwargs):
             html.Div(
                 className="page-header",
                 children=[
-                    html.H1("Drivers & Risk Factors"),
+                    html.H1("Is the outcome explained by its risk factors — or is something else going on?"),
                     html.P(
-                        "Plot any risk factor, social need, or access gap "
-                        "against any health outcome. Counties are colored by "
-                        "how far their outcome sits above or below what the "
-                        "driver alone would predict.",
+                        "Pick a risk factor and an outcome. Every county becomes "
+                        "a dot, sized by adult population. The dashed line is "
+                        "the selection's overall pattern — counties above it "
+                        "have a worse outcome than the risk factor alone would predict.",
                         className="dek",
                     ),
+                    prevalence_note(),
                 ],
             ),
 
@@ -135,21 +138,33 @@ def layout(**kwargs):
             html.Div(
                 className="panel",
                 children=[
+                    # Driver / swap / Outcome as one visual unit
                     html.Div(
-                        className="grid grid--2",
+                        className="axis-pair",
                         children=[
                             html.Div([
-                                html.Label("Driver — horizontal axis",
+                                html.Label("Risk factor — horizontal axis",
                                            className="label", htmlFor="rf-x"),
                                 dcc.Dropdown(
                                     id="rf-x",
                                     options = DRIVER_LABELS,
                                     value=DEFAULT_X, clearable=False,
-                                ),                               
+                                ),
                                 html.Div(id="rf-x-subtitle",
-                                        className="stat__label",
-                                        style={"marginTop": "0.4rem"}),
+                                         className="measure-subtitle"),
                             ]),
+                            html.Div(
+                                className="axis-pair__swap",
+                                children=[
+                                    html.Button(
+                                        "⇄",
+                                        id="rf-swap",
+                                        n_clicks=0,
+                                        title="Swap axes",
+                                        className="btn btn--secondary swap-btn",
+                                    ),
+                                ],
+                            ),
                             html.Div([
                                 html.Label("Outcome — vertical axis",
                                            className="label", htmlFor="rf-y"),
@@ -159,9 +174,8 @@ def layout(**kwargs):
                                     value=DEFAULT_Y, clearable=False,
                                 ),
                                 html.Div(id="rf-y-subtitle",
-                                        className="stat__label",
-                                        style={"marginTop": "0.4rem"}),
-                                        ]),                        
+                                         className="measure-subtitle"),
+                            ]),
                         ],
                     ),
                     html.Div(
@@ -195,24 +209,13 @@ def layout(**kwargs):
                             ]),
                             html.Div([
                                 html.Span("Chart options", className="label"),
-                                html.Div(
-                                    style={"display": "flex", "gap": "0.75rem",
-                                           "alignItems": "center",
-                                           "marginTop": "0.5rem"},
-                                    children=[
-                                        dcc.Checklist(
-                                            id="rf-trend",
-                                            options=[{"label": " Expected-value line",
-                                                      "value": "on"}],
-                                            value=["on"],
-                                            inputStyle={"marginRight": "0.35rem"},
-                                        ),
-                                        html.Button(
-                                            "Swap axes", id="rf-swap",
-                                            n_clicks=0,
-                                            className="btn btn--secondary",
-                                        ),
-                                    ],
+                                dcc.Checklist(
+                                    id="rf-trend",
+                                    options=[{"label": " Expected-value line",
+                                              "value": "on"}],
+                                    value=["on"],
+                                    inputStyle={"marginRight": "0.35rem"},
+                                    style={"marginTop": "0.6rem"},
                                 ),
                             ]),
                         ],
@@ -220,33 +223,42 @@ def layout(**kwargs):
                 ],
             ),
 
-            # ---------------- Live stat strip ----------------
-            html.Div(
-                className="panel",
-                children=[
-                    html.Div(
-                        className="grid grid--3",
-                        children=[
-                            _stat("rf-stat-r", "rf-stat-r-label", "Correlation"),
-                            _stat("rf-stat-n", "rf-stat-n-label",
-                                  "Counties plotted"),
-                            _stat("rf-stat-outlier", "rf-stat-outlier-label",
-                                  "Largest unexplained gap"),
-                        ],
-                    ),
-                ],
-            ),
+            # ---- Readout sits flush on top of the scatter, so the
+            # ---- summary and the chart read as one instrument.
+            readout([
+                readout_cell(value_id="rf-stat-r", label_id="rf-stat-r-label",
+                             label="Correlation"),
+                readout_cell(value_id="rf-stat-outlier",
+                             label_id="rf-stat-outlier-label",
+                             label="Largest unexplained gap",
+                             value_class="readout__value--risk"),
+                readout_cell(value_id="rf-stat-n", label_id="rf-stat-n-label",
+                             label="Counties plotted"),
+            ], attached=True),
 
             # ---------------- Scatter ----------------
             html.Div(
-                className="panel",
+                className="panel panel--attached",
                 children=[
                     dcc.Graph(
                         id="rf-scatter",
                         config={"displayModeBar": False},
                         figure=_message_figure("Loading…"),
                     ),
-                    html.P(id="rf-note", className="stat__label",
+                    # What the encodings mean, in words. Static -- none of
+                    # it changes per selection, so no callback needed.
+                    diverging_legend(
+                        "Better than expected",
+                        "Worse than expected",
+                        RESIDUAL_GRADIENT,
+                        items=[
+                            ("dash", "Expected-value line — this selection's "
+                                     "overall pattern"),
+                            (None, "Bubble size = adult population, 18+"),
+                            (None, "Click a county to pin it below"),
+                        ],
+                    ),
+                    html.P(id="rf-note", className="readout__hint",
                            style={"marginTop": "0.75rem", "maxWidth": "68ch"}),
                 ],
             ),
@@ -285,6 +297,10 @@ def layout(**kwargs):
                              style={"marginTop": "1.25rem"}),
                 ],
             ),
+
+            # Limits to carry away -- last thing on the page, read after
+            # the chart rather than standing in front of it.
+            correlation_caveats(),
         ],
     )
 
@@ -308,12 +324,9 @@ def layout(**kwargs):
     Input("rf-trend", "value"),
 )
 def update_scatter(x_label, y_label, state, basis, trend):
-    # correlate() raises on an invalid pair (same measure on both axes,
-    # nothing selected) -- surface the reason instead of a broken chart.
     try:
         frame, stats = correlate(x_label, y_label, basis=basis, state=state)
     except ValueError as err:
-        import traceback; traceback.print_exc()
         blank = "—"
         return (_message_figure(str(err)), blank, "Correlation", blank,
                 "Counties plotted", blank, "Largest unexplained gap", "")
@@ -351,7 +364,6 @@ def update_scatter(x_label, y_label, state, basis, trend):
                     opacity=0.85),
     )
 
-    # Expected-value line: what Y the fit predicts at each X.
     if "on" in (trend or []) and stats["slope"] is not None:
         xs = np.array([frame["x"].min(), frame["x"].max()])
         fig.add_trace(go.Scatter(
@@ -368,42 +380,37 @@ def update_scatter(x_label, y_label, state, basis, trend):
         margin=dict(l=10, r=10, t=30, b=10),
         xaxis_title=f"{x_label} — {basis_word} (%)",
         yaxis_title=f"{y_label} — {basis_word} (%)",
-        coloraxis_colorbar=dict(
-            title=dict(text="Gap vs.<br>expected<br>(pp)", font=dict(size=11)),
-            thickness=12, len=0.6, outlinewidth=0,
-        ),
+        # The HTML legend under the chart already explains the color, in
+        # words rather than percentage points. A second numeric color bar
+        # here would say the same thing worse, and eat chart width.
+        coloraxis_showscale=False,
     )
     fig.update_xaxes(gridcolor="#E4E7E1", zeroline=False,
                      ticksuffix="%", showline=True, linecolor="#D8DCD6")
     fig.update_yaxes(gridcolor="#E4E7E1", zeroline=False,
                      ticksuffix="%", showline=True, linecolor="#D8DCD6")
 
-    # ---- stat cards ----
     r = stats["r"]
     r_value = f"{r:+.2f}" if r is not None else "—"
     r_label = describe_strength(r)
 
     n_value = f"{stats['n']:,}"
-    n_label = f"of {scope}, bubble size = adult population, 18+"
+    n_label = f"of {scope} · bubble size = adult population, 18+"
 
     top = worst_outlier(frame)
     if top is None:
         out_value, out_label = "—", "Not enough counties to rank"
     else:
-        out_value = f"{top['locationname']}"
+        out_value = f"{top['residual']:+.1f} pp"
         out_label = (
-            f"{top['statedesc']} — {top['residual']:+.1f} pp above the "
-            f"{y_label.lower()} rate its {x_label.lower()} predicts"
+            f"{top['locationname']}, {top['statedesc']} — worse than its "
+            f"{x_label.lower()} predicts"
         )
 
     note = (
         f"{y_label} plotted against {x_label}, {basis_word}, {scope}. "
         f"BRFSS survey year: {measure_year(y_label)} for {y_label}, "
-        f"{measure_year(x_label)} for {x_label}. "
-        "Color shows each county's distance from the dashed expected-value "
-        "line in percentage points — rust means the outcome is worse than "
-        "the driver alone predicts, teal means better. Association only; "
-        "these are model-based small-area estimates, not causal evidence."
+        f"{measure_year(x_label)} for {x_label}."
     )
 
     return (fig, r_value, r_label, n_value, n_label,

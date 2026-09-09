@@ -15,7 +15,17 @@ from dash import dcc, html, Input, Output
 import plotly.express as px
 import pandas as pd
 
-from data_prep import df_raw, df_aa, DISEASES, FIPS, COUNTY, STATE, ALL_STATES, STATE_OPTIONS
+from data_prep import (df_raw, df_aa, DISEASES, FIPS, COUNTY, STATE,
+                       ALL_STATES, STATE_OPTIONS, SHORT_LABELS)
+from ui_notes import (
+    crude_adjusted_note,
+    estimate_caveats,
+    legend_row,
+    prevalence_note,
+    readout,
+    readout_cell,
+)
+
 dash.register_page(__name__, path="/", name="Public Health Overview")
 
 # --------------------------------------------------------------------
@@ -42,17 +52,6 @@ RISK_SCALE = [
     [1.0, "#0f5c3d"],
 ]
 
-def _stat_card(card_id, label):
-    return html.Div(
-        className = "panel stat", 
-        children = [
-            html.Div(id=f"{card_id}-value", className = "stat__value", children = "-"), 
-            html.Div(label, className = "stat__label"), 
-            html.Div(id = f"{card_id}-delta", className = "stat__delta"),
-        ],
-    )
-
-
 def layout(**kwargs):
     return html.Div(
         className="page-wrap",
@@ -60,30 +59,20 @@ def layout(**kwargs):
             html.Div(
                 className="page-header",
                 children=[
-                    html.H1("Public Health Overview"),
+                    html.H1("Where a condition is most common"),
                     html.P(
-                        "County-level disease prevalence, raw or age-adjusted.",
+                        "Pick a measure to see every U.S. county at once, or "
+                        "narrow to a single state. Each figure is the share of "
+                        "adults affected — not a case count — so a county of "
+                        "2,000 and a county of 2 million compare on the same "
+                        "footing.",
                         className="dek",
                     ),
+                    prevalence_note(),
                 ],
             ),
 
-            html.Div(
-                className = "grid grid--3 stat-row",
-                children = [
-                    _stat_card("US-total", "Population-weighted %"),
-                    _stat_card("county-rank", "Selected County Rank"),
-                    html.Div(
-                         className = "panel stat",
-                         children = [
-                              html.Div("Most affected counties", className = "stat__label"),
-                              html.Div(id="top-counties-scope", className="stat__delta"),
-                              html.Ol(id = "top-counties-list", className = "top-counties-list"),
-                         ],
-                    ),
-                ],
-            ),
-
+            # ---------------- Controls ----------------
             html.Div(
                 className="panel",
                 children=[
@@ -100,12 +89,19 @@ def layout(**kwargs):
                                     dcc.Dropdown(
                                         id="disease-dropdown",
                                         options=[
-                                            {"label": d, "value": d}
+                                            {"label": SHORT_LABELS.get(d, d),
+                                             "value": d}
                                             for d in DISEASES
                                         ],
                                         value=DISEASES[0],
                                         clearable=False,
                                     ),
+                                    # CDC's own full wording, which is where
+                                    # the denominator hides -- "High
+                                    # Cholesterol" is only among adults ever
+                                    # screened, not all adults.
+                                    html.Div(id="disease-subtitle",
+                                             className="measure-subtitle"),
                                 ]
                             ),
                             html.Div(
@@ -137,24 +133,76 @@ def layout(**kwargs):
                                         value=[],  # unchecked = raw/crude
                                         style={"marginTop": "0.6rem"},
                                     ),
+                                    crude_adjusted_note(),
                                 ]
                             ),
                         ],
                     ),
                 ],
             ),
+
+            # ---- Readout sits flush on top of the map: one instrument,
+            # ---- not two stacked boxes (see .readout--attached).
+            readout([
+                readout_cell(
+                    value_id="US-total-value",
+                    label="Population-weighted %",
+                    extra=html.Div(id="US-total-delta", className="readout__hint"),
+                ),
+                readout_cell(
+                    value_id="county-rank-value",
+                    label="Selected county",
+                    value_class="readout__value--name",
+                    extra=html.Div(id="county-rank-delta", className="readout__hint"),
+                ),
+                html.Div(
+                    className="readout__cell",
+                    children=[
+                        html.Div("Most affected counties", className="readout__label"),
+                        html.Div(id="top-counties-scope", className="readout__hint"),
+                        html.Ol(id="top-counties-list", className="top-counties-list"),
+                    ],
+                ),
+            ], attached=True),
+
+            # ---------------- Map ----------------
             html.Div(
-                className="panel",
+                className="panel panel--attached",
                 children=[
                     dcc.Graph(
                         id="choropleth-map",
                         config={"displayModeBar": False, "scrollZoom": False},
                         style = {"width": "100%", "height": "650px"},
                     ),
+                    # Kentucky and Pennsylvania report no 2023 measures in
+                    # this CDC release, so they render unshaded on every
+                    # 2023-based measure. Say so rather than leave a hole.
+                    legend_row([
+                        ("#0f5c3d", "Darker = a larger share of adults affected"),
+                        ("#EDEBE4", "Unshaded — no data reported for this measure"),
+                        (None, "Click any county to read it in the panel above"),
+                    ]),
                 ],
             ),
+
+            # Limits to carry away -- last thing on the page, read after
+            # the map rather than standing in front of it.
+            estimate_caveats(),
         ],
     )
+
+
+@dash.callback(
+    Output("disease-subtitle", "children"),
+    Input("disease-dropdown", "value"),
+)
+def update_disease_subtitle(selected_disease):
+    """CDC's full wording for the selected measure. The dropdown shows the
+    short label; this is where the real definition and its denominator
+    live. Same pattern as the axis subtitles on the Drivers page."""
+    if not selected_disease:
+        return ""
+    return selected_disease[:1].upper() + selected_disease[1:]
 
 
 @dash.callback(
@@ -213,7 +261,15 @@ def update_map(selected_disease, adjustment_value, selected_state):
     fig.update_layout(
         margin={"r": 0, "t": 60, "l": 0, "b": 0},
         font_family="IBM Plex Sans, -apple-system, sans-serif",
-        coloraxis_colorbar_title=stat_label,
+        # Say which direction is worse in words -- a bare numeric scale
+        # leaves a first-time reader guessing whether dark is good or bad.
+        coloraxis_colorbar=dict(
+            title=dict(text="% of adults<br>affected<br>&nbsp;", side="top"),
+            ticksuffix="%",
+            thickness=12,
+            len=0.62,
+            outlinewidth=0,
+        ),
         title=f"{selected_disease} — {stat_label} — {scope_title}",
         title_font_family="Spectral, Georgia, serif",
         height = 650,
