@@ -256,28 +256,23 @@ def update_stat_cards(selected_disease, adjustment_value, selected_state, clickD
 
     if not county_row.empty:
         selected_county = county_row[COUNTY].iloc[0]
+        selected_state_name = county_row[STATE].iloc[0]
 
         ranks = source_df[selected_disease].rank(ascending = False, method = "min")
         county_rank = int(ranks.loc[county_row.index[0]])
         total_counties = source_df[selected_disease].notna().sum()
 
-        county_rank_value = selected_county
+        county_rank_value = f"{selected_county}, {selected_state_name}"
         county_rank_delta = f"Rank {county_rank} of {total_counties} ({scope_label.lower()})"
     else:
          county_rank_value = "-"
          county_rank_delta = "Click a county on the map"
 
     top3 = source_df.nlargest(3, selected_disease)
-    if is_national:
-        top_counties_children = [
-            html.Li(f"{row[COUNTY]}, {row[STATE]} - {row[selected_disease]:.1f}%")
-            for _, row in top3.iterrows()
-        ]
-    else:
-        top_counties_children = [
-            html.Li(f"{row[COUNTY]} - {row[selected_disease]:.1f}%")
-            for _, row in top3.iterrows()
-        ]
+    top_counties_children = [
+        html.Li(f"{row[COUNTY]}, {row[STATE]} - {row[selected_disease]:.1f}%")
+        for _, row in top3.iterrows()
+    ]
 
     return (
         state_avg_value,
