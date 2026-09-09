@@ -261,6 +261,50 @@ p { max-width: 68ch; margin: 0 0 1rem; }
   margin: 0 0 1rem;
 }
  
+/* ---- At-risk leaderboard ---- */
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.leaderboard-row:last-child { border-bottom: none; }
+
+.leaderboard-rank {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: var(--muted-2);
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.leaderboard-main { flex: 1; min-width: 0; }
+
+.leaderboard-county {
+  font-weight: 500;
+  font-size: var(--step-0);
+  color: var(--ink);
+}
+
+.leaderboard-tags {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.leaderboard-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step-2);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
 .grid {
   display: grid;
   gap: 1.25rem;
