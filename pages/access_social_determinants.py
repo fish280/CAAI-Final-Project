@@ -1,5 +1,5 @@
 """
-Page 3 — Access & Social Determinants
+Page 3: Access & Social Determinants
 
 THE QUESTION THIS PAGE ANSWERS:
   "Which counties have the biggest gaps in healthcare access and
@@ -10,7 +10,7 @@ WHAT'S ON THIS PAGE:
     measure(s) are currently on the chart.
   - A measure dropdown (the "primary" measure always shown) plus an
     "also compare" checklist to add more measures from the same
-    cluster — the chart opens with just one measure, and you add more.
+    cluster, the chart opens with just one measure, and you add more.
   - A ranked view (top N counties, biggest gap first) or a two-county
     compare view, switchable with a toggle.
   - A search box to pin any specific county into the ranked view, even
@@ -24,8 +24,26 @@ WHY THE CHART TITLE ISN'T INSIDE THE PLOTLY FIGURE:
   collide with the legend (that's the overlap you saw in the
   screenshot). The fix is simple: the title/subtitle are now plain
   Dash text sitting above the chart, and the figure itself has no
-  title at all — so there's nothing left for the legend to collide
+  title at all, so there's nothing left for the legend to collide
   with.
+"""
+
+"""
+AI ASSISTANCE:
+  Used AI to draft the initial version of this page's
+  layout and callback code and for later iterative changes.
+  Specifics:
+    - feedback on how to add the sidebar ranking, measure selector + "also
+      compare" checklist, chart-width slider, county search, two-
+      county compare mode
+    - asked Ai to draft the updated layout
+      and callback code implementing those changes.
+    - Asked AI to help fix a layout bug where the chart's
+      title and legend overlapped.
+    - Asked AI to help debug a stray code duplication
+      between this file and access_prep.py.
+  All AI-suggested code was reviewed, tested by running the app, and
+  edited/approved by the team before being added to the project.
 """
 
 import sys

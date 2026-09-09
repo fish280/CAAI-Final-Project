@@ -1,5 +1,5 @@
 """
-access_prep.py — Data preparation for Page 3 (Access & Social Determinants)
+access_prep.py: Data preparation for Page 3 (Access & Social Determinants)
 
 WHAT THIS FILE DOES:
   Loads the CDC PLACES county data once at startup, isolates the six
@@ -17,6 +17,23 @@ HOW IT CONNECTS TO THE REST OF THE APP:
     (5-digit FIPS code) is passed to Page 1's map via a URL query
     parameter so the map can auto-select that county.
 """
+
+"""
+AI ASSISTANCE:
+  Used AI to draft the initial version of this file's
+  data-prep logic and for iterative changes alongside the matching 
+  changes in access_social_determinants.py.
+  Specifics:
+    - asked AI to draft the updated MEASURES/
+      CLUSTERS definitions and the reworked data functions needed
+      for the new page features
+    - Asked AI to how to make the sidebar
+      ranking always use the single primary measure, regardless of
+      which extra measures are toggled for comparison.
+  All AI-suggested code was reviewed, tested by running the app, and
+  edited/approved by the team before being added to the project.
+"""
+
 
 import pandas as pd
 from pathlib import Path
