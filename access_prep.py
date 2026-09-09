@@ -2,38 +2,20 @@
 access_prep.py — Data preparation for Page 3 (Access & Social Determinants)
 
 WHAT THIS FILE DOES:
-  Loads the CDC PLACES county data once at startup, isolates the nine
-  health-related social needs (SOCLNEED) and prevention measures that
-  this page needs, pivots the data from long format (one row per
-  county × measure) to wide format (one row per county, one column
-  per measure), flips the CHECKUP measure so all bars read
-  "higher = worse," and provides helper functions for filtering,
-  sorting, and flagging counties with severe access gaps.
-
-WHY IT'S A SEPARATE FILE (same pattern as data_prep.py and risk_prep.py):
-  Each page in the dashboard has its own prep module so the data
-  loading and measure-specific logic live in one place. The page file
-  (pages/access_social_determinants.py) only handles layout and
-  callbacks; it imports everything it needs from here. This keeps the
-  page file readable and makes it easy to test the data logic
-  independently of the UI.
+  Loads the CDC PLACES county data once at startup, isolates the six
+  health-related social needs and prevention measures this page needs,
+  pivots the data from long format (one row per county x measure) to
+  wide format (one row per county, one column per measure), flips the
+  CHECKUP measure so all bars read "higher = worse," and provides
+  helper functions for filtering, sorting, ranking, and comparing
+  counties.
 
 HOW IT CONNECTS TO THE REST OF THE APP:
-  - Reads from: data/places_county_clean.csv (the same CDC PLACES
-    dataset the other pages use — long format, one row per county ×
-    measure)
-  - Feeds into: pages/access_social_determinants.py (David's page)
+  - Reads from: data/places_county_clean.csv
+  - Feeds into: pages/access_social_determinants.py
   - Cross-page link: when a bar is clicked, the county's locationid
-    (5-digit FIPS code) is passed to Page 1's map via URL query
-    parameter so the map can auto-select that county
-
-DATA SOURCE NOTE:
-  The CSV is in LONG format: each row is one county × one measure.
-  Columns include: locationid, measureid, crude_prevalence,
-  adj_prevalence, statedesc, locationname, latitude, longitude,
-  totalpopulation, etc. This module pivots the data to wide format
-  (one row per county, one column per measure) so the page callbacks
-  can work with it the same way they would with a wide-format CSV.
+    (5-digit FIPS code) is passed to Page 1's map via a URL query
+    parameter so the map can auto-select that county.
 """
 
 import pandas as pd
@@ -43,28 +25,14 @@ from pathlib import Path
 # ============================================================
 # 1. MEASURE DEFINITIONS
 # ============================================================
-# WHY A DICTIONARY INSTEAD OF HARD-CODED COLUMN NAMES:
-#   Each of the 9 measures has a short code (ACCESS2, CHECKUP, etc.)
-#   that matches the measureid column in the CSV, a human-readable
-#   label ("Lacks health insurance"), and a polarity ("worse" means
-#   higher % = worse outcome; "better" means higher % = better
-#   outcome and must be flipped). Centralizing this metadata means
-#   the label and polarity only live in ONE place — if you add or
-#   remove a measure, you change it here and every callback, chart,
-#   and tooltip picks it up automatically.
-#
-# COLUMN NAMES AFTER PIVOTING:
-#   After we pivot the long-format CSV to wide format, each measure
-#   becomes a column named after its measureid (e.g., "ACCESS2",
-#   "CHECKUP"). The "column" field below tells the pivot and the
-#   helper functions which column to look for — it matches the
-#   measureid value in the raw CSV.
-
+# Six measures now (down from nine) — Loneliness, Food stamp usage,
+# and Utility shutoff threat were dropped from the Social & Economic
+# Strain cluster per feedback, to keep that chart legible.
 MEASURES = {
     # --- Access to Care cluster ---
     "ACCESS2": {
         "label": "Lacks health insurance",
-        "column": "ACCESS2",           # matches measureid in the CSV
+        "column": "ACCESS2",
         "polarity": "worse",           # higher % = worse access
     },
     "CHECKUP": {
@@ -93,48 +61,14 @@ MEASURES = {
         "column": "EMOTIONSPT",
         "polarity": "worse",
     },
-    "LONELINESS": {
-        "label": "Loneliness",
-        "column": "LONELINESS",
-        "polarity": "worse",
-    },
-    "FOODSTAMP": {
-        "label": "Food stamp usage",
-        "column": "FOODSTAMP",
-        "polarity": "worse",          # proxy for economic need
-    },
-    "SHUTUTILITY": {
-        "label": "Utility shutoff threat",
-        "column": "SHUTUTILITY",
-        "polarity": "worse",
-    },
 }
 
 
 # ============================================================
 # 2. CLUSTER DEFINITIONS
 # ============================================================
-# WHY TWO CLUSTERS INSTEAD OF ALL 9 AT ONCE:
-#   A grouped bar chart with 9 bars per county across 15–20 counties
-#   would be 135–180 bars — completely unreadable. Instead, the
-#   measures are split into two thematic clusters that match how a
-#   program officer actually thinks about the problem:
-#
-#   "Can people get to a doctor?" → Access to Care
-#       (insurance coverage + routine preventive care)
-#
-#   "Are their basic needs met?" → Social & Economic Strain
-#       (food, housing, transportation, social isolation, utilities)
-#
-#   The dashboard toggles between these clusters so each view stays
-#   legible (2 bars per county for Access, 7 for Social — still dense
-#   but manageable with hovering).
-
 ACCESS_CLUSTER = ["ACCESS2", "CHECKUP"]
-SOCIAL_CLUSTER = [
-    "FOODINSECU", "HOUSINSECU", "LACKTRPT",
-    "EMOTIONSPT", "LONELINESS", "FOODSTAMP", "SHUTUTILITY",
-]
+SOCIAL_CLUSTER = ["FOODINSECU", "HOUSINSECU", "LACKTRPT", "EMOTIONSPT"]
 
 CLUSTERS = {
     "access": {
@@ -153,55 +87,14 @@ CLUSTERS = {
 # ============================================================
 # 3. LOAD THE CDC PLACES COUNTY DATA
 # ============================================================
-# WHY LOAD AT IMPORT TIME:
-#   The CSV is ~20 MB and contains 114,000+ rows (one per county ×
-#   measure). Reading it from disk on every user interaction would
-#   make the dashboard sluggish. By loading it once here — when
-#   Python first imports this module — the entire DataFrame sits in
-#   memory and every callback reuses the same object. This is the
-#   same pattern Lauren and Samuel use in data_prep.py and risk_prep.py.
-
-# WHY Path(__file__).parent / "data" / ...: This resolves the CSV
-# path relative to THIS file's location, then looks inside a "data"
-# subfolder. So if access_prep.py is in CAAI-Final-Project\, the CSV
-# should be at CAAI-Final-Project\data\places_county_clean.csv.
 DATA_PATH = Path(__file__).parent / "data" / "places_county_clean.csv"
 
-# Read the raw long-format CSV.
-# WHY dtype={"locationid": str}: FIPS codes like "01001" lose their
-# leading zero if pandas reads them as integers. The cross-page link
-# to Page 1's map depends on locationid matching the GeoJSON keys,
-# which are always 5-digit strings.
 _raw_long = pd.read_csv(DATA_PATH, dtype={"locationid": str})
 _raw_long["locationid"] = _raw_long["locationid"].str.zfill(5)
 
-
-# ============================================================
-# 3b. FILTER AND PIVOT TO WIDE FORMAT
-# ============================================================
-# WHY PIVOT:
-#   The CSV is in long format — each row is one county × one measure.
-#   For example, Autauga County, AL has 9 rows (one per measure we
-#   care about), each with a different crude_prevalence value. The
-#   grouped bar chart needs wide format — one row per county with
-#   separate columns for each measure. Pandas' pivot_table does this
-#   transformation.
-#
-# WHY FILTER FIRST:
-#   The full CSV has 80+ measures. We only need our 9, so filtering
-#   before pivoting keeps the pivot result small and fast.
-
 _measure_ids = list(MEASURES.keys())
-
-# Filter to only the 9 measures this page needs
 _filtered = _raw_long[_raw_long["measureid"].isin(_measure_ids)].copy()
 
-# Pivot from long to wide format:
-#   - Index: one row per county (identified by locationid)
-#   - Columns: one column per measure (using measureid as column name)
-#   - Values: crude_prevalence
-#   - aggfunc="first": if there happen to be duplicate rows, take the
-#     first one (there shouldn't be, but this prevents errors)
 _places = _filtered.pivot_table(
     index=["locationid", "locationname", "statedesc",
            "latitude", "longitude",
@@ -210,19 +103,9 @@ _places = _filtered.pivot_table(
     values="crude_prevalence",
     aggfunc="first",
 ).reset_index()
-
-# Flatten the column index (pivot_table creates a MultiIndex column
-# when using multiple index columns; reset_index fixes the row index
-# but the column name might still be in a hierarchy)
 _places.columns.name = None
 
-
-# ============================================================
-# 3c. VALIDATE EXPECTED COLUMNS
-# ============================================================
-# WHY: After pivoting, each measure should have its own column. If
-# a measure had zero rows in the CSV (unlikely but possible), its
-# column won't exist after pivoting. This check catches that.
+# --- Validate expected columns exist after pivoting ---
 _missing = []
 for code, info in MEASURES.items():
     if info["column"] not in _places.columns:
@@ -231,138 +114,63 @@ if _missing:
     _missing_str = "\n".join(_missing)
     raise ValueError(
         f"access_prep.py: {len(_missing)} expected measure column(s) not "
-        f"found after pivoting. Missing columns:\n{_missing_str}\n\n"
-        f"These measures may not exist in the CSV's measureid column."
+        f"found after pivoting. Missing columns:\n{_missing_str}"
     )
-
-# Also verify the location columns exist
 for _loc_col in ("locationid", "locationname", "statedesc"):
     if _loc_col not in _places.columns:
         raise ValueError(
             f"access_prep.py: required column '{_loc_col}' not found "
-            f"after pivoting. Check the CSV has these columns: "
-            f"locationid, locationname, statedesc."
+            f"after pivoting."
         )
 
 
 # ============================================================
-# 4. POLARITY FLIP FOR CHECKUP (AND ANY "HIGHER = BETTER" MEASURE)
+# 4. POLARITY FLIP FOR CHECKUP
 # ============================================================
-# WHY THIS IS NECESSARY:
-#   The CDC measures CHECKUP as "% of adults who had an annual
-#   checkup" — so a HIGH number is GOOD (more people getting
-#   checkups). But every other measure on this page is framed as a
-#   gap or hardship where HIGH = BAD. If we plot CHECKUP alongside
-#   ACCESS2 without flipping, a tall CHECKUP bar would look like a
-#   bad thing when it's actually a good thing — the chart would be
-#   actively misleading.
-#
-#   THE FIX: Convert CHECKUP to 100 − value, which turns
-#   "% who got a checkup" into "% who did NOT get a checkup."
-#   Now every bar on the chart means the same thing:
-#       taller bar = bigger gap = worse.
-#
-#   This is the "insurance/checkup gap" language from the project's
-#   own planning doc — the professor framed it as a gap, not a rate.
-
+# CHECKUP is "% who got a checkup" (higher = good). Flipping it to
+# 100 - value turns it into "% who did NOT get a checkup," so every
+# bar on the page means the same thing: taller = bigger gap = worse.
 def _flip_polarity(df):
-    """
-    Flip any measure whose polarity is "better" so that ALL measures
-    read "higher = worse gap." Returns a new DataFrame; does not
-    modify the original.
-
-    Currently only CHECKUP is flipped, but if a future measure is
-    added with polarity "better," this function handles it
-    automatically — no other code needs to change.
-    """
     out = df.copy()
     for code, info in MEASURES.items():
         col = info["column"]
         if col not in out.columns:
             continue
         if info["polarity"] == "better":
-            # 100 − checkup rate = share who didn't get a checkup
             out[col] = 100.0 - out[col]
     return out
 
-# Apply the flip ONCE at import time so every callback gets
-# consistent, already-flipped data without re-doing the math.
 _places = _flip_polarity(_places)
 
 
 # ============================================================
 # 5. STATE OPTIONS & MISSING-DATA HANDLING
 # ============================================================
-# WHY THIS MATTERS:
-#   The CDC's social-needs questions (food insecurity, housing
-#   insecurity, loneliness, etc.) come from a special BRFSS survey
-#   module that 11 states chose not to administer. Those states have
-#   ZERO data for the entire Social & Economic Strain cluster — not
-#   just a few missing values, but no rows at all. If the state
-#   dropdown lets someone pick Texas and switch to the Social
-#   cluster, the chart would be blank with no explanation.
-#
-#   We handle this two ways:
-#   1. The dropdown still lists all states (so the user can pick
-#      Access to Care for any state), but the chart shows a clear
-#      empty-state message when social-needs data is missing.
-#   2. We export the set of missing states so the page can display
-#      a contextual note.
-
 SOCIAL_MISSING_STATES = {
     "Colorado", "Florida", "Kentucky", "Oregon", "Pennsylvania",
     "South Dakota", "Tennessee", "Texas", "Vermont", "Washington",
     "Wyoming",
 }
 
-# Build the state dropdown from states that actually appear in the
-# data, sorted alphabetically. The "National (Top N)" option lets
-# the user see the worst counties across the entire country without
-# picking a specific state — useful for a grant-maker comparing
-# across state lines.
 _all_states = sorted(_places["statedesc"].dropna().unique())
 STATE_OPTIONS = [{"label": "National (Top N counties)", "value": "ALL"}]
 STATE_OPTIONS += [{"label": s, "value": s} for s in _all_states]
 
-# Default to Virginia — matches the rest of the dashboard's scope
-# decision (Page 1's map is Virginia-only, so cross-page links work
-# cleanly when both pages look at the same state).
 DEFAULT_STATE = "Virginia"
 
 
 # ============================================================
-# 6. COLOR PALETTE (from styles.css)
+# 6. COLOR PALETTE
 # ============================================================
-# WHY FIXED COLORS PER MEASURE:
-#   Each measure gets a fixed color so the user can identify it
-#   across different views, states, and sort orders. If ACCESS2 is
-#   always rust-colored, the user learns that association and can
-#   read the chart faster.
-#
-#   The colors are drawn from the project's styles.css palette:
-#     risk-high  #A8442E (rust)    — direct access barriers
-#     risk-mid   #C98A2E (amber)   — preventive care gaps
-#     risk-low   #1F7A63 (teal)    — social/emotional measures
-#   plus muted earth tones for the strain cluster, keeping the
-#   chart visually consistent with the rest of the site.
-
 MEASURE_COLORS = {
     "ACCESS2":     "#A8442E",  # rust — direct access barrier
     "CHECKUP":     "#C98A2E",  # amber — preventive care gap
     "FOODINSECU":  "#8B5A2B",  # warm brown — food
     "HOUSINSECU":  "#6B4226",  # darker brown — housing
-    "LACKTRPT":    "#5C6D67",  # muted gray-green — isolation/transport
+    "LACKTRPT":    "#5C6D67",  # muted gray-green — transport
     "EMOTIONSPT":  "#1F7A63",  # teal — social support
-    "LONELINESS":  "#2E8B62",  # green — loneliness
-    "FOODSTAMP":   "#4A7C6E",  # teal-green — economic need
-    "SHUTUTILITY": "#86948E",  # gray — utility
 }
 
-# Map from human-readable measure labels to colors.
-# WHY: Plotly Express's px.bar(color=...) keys the color map by the
-# values in the color column. We use the human-readable label as the
-# color column (so the legend says "Food insecurity" not "FOODINSECU"),
-# so the color map must also be keyed by label.
 LABEL_COLORS = {
     MEASURES[code]["label"]: MEASURE_COLORS[code]
     for code in MEASURE_COLORS
@@ -370,118 +178,65 @@ LABEL_COLORS = {
 
 
 # ============================================================
-# 7. FLAGGING SYSTEM — COUNTIES WITH SEVERE ACCESS GAPS
+# 7. MAIN DATA ACCESS FUNCTION — builds the chart data
 # ============================================================
-# WHY THIS EXISTS:
-#   The brainstorming doc asks for "a flagging system for counties
-#   that severely lack access to healthcare options." A flat ranking
-#   hides counties that are extreme on ONE measure but moderate on
-#   others — exactly the counties a program officer needs to see.
-#
-#   HOW IT WORKS:
-#   A county is "flagged" if ANY of its measures in the current
-#   cluster exceeds the 90th percentile nationally. The OR logic is
-#   deliberate: a county might have a moderate food insecurity rate
-#   but the worst transportation barrier rate in the country. That
-#   county deserves attention even though its average looks fine.
-#
-#   The threshold (90th percentile) is adjustable below. Lower it to
-#   flag more counties; raise it to be more selective.
-
-SEVERE_THRESHOLD_PERCENTILE = 90
-
-
-def flag_severe_counties(df, measure_codes):
-    """
-    Returns a set of locationid strings for counties where ANY of the
-    given measures exceeds the 90th percentile nationally.
-
-    Parameters:
-    -----------
-    df : DataFrame
-        The full (already-pivoted, already-flipped) CDC PLACES DataFrame.
-    measure_codes : list of str
-        Measure codes to check (e.g., ["ACCESS2", "CHECKUP"]).
-
-    Returns:
-    --------
-    set of str — locationid values for flagged counties.
-    """
-    flagged = set()
-    for code in measure_codes:
-        col = MEASURES[code]["column"]
-        if col not in df.columns:
-            continue
-        # Compute the 90th percentile threshold for this measure
-        # across ALL counties (not just the current state), so the
-        # flag means "extreme relative to the national distribution."
-        threshold = df[col].dropna().quantile(
-            SEVERE_THRESHOLD_PERCENTILE / 100.0
-        )
-        severe = df[df[col] >= threshold]
-        flagged.update(severe["locationid"].tolist())
-    return flagged
-
-
-# ============================================================
-# 8. MAIN DATA ACCESS FUNCTION
-# ============================================================
-
 def get_cluster_data(state="Virginia", cluster_key="access",
-                     sort_measure=None, sort_order="gap", top_n=15):
+                      measure_codes=None, top_n=15,
+                      pinned_county=None, compare_counties=None):
     """
-    Filter, sort, and prepare data for the grouped bar chart.
+    Build the data behind the grouped bar chart.
 
-    This is the function the page's main callback calls every time
-    the user changes a dropdown or toggle. It does all the data work
-    in one place so the callback stays focused on building the figure.
-
-    Parameters:
-    -----------
+    Parameters
+    ----------
     state : str
-        State name (e.g., "Virginia"), or "ALL" for national top-N.
+        State name, or "ALL" for national.
     cluster_key : str
-        "access" or "social" — which cluster of measures to show.
-    sort_measure : str or None
-        Which measure code to sort counties by. If None, defaults to
-        the first measure in the cluster (ACCESS2 for Access,
-        FOODINSECU for Social).
-    sort_order : str
-        "gap" = biggest gap first (descending by sort measure value),
-        "alpha" = alphabetical by county name.
+        "access" or "social" — which family of measures we're allowed
+        to pick from.
+    measure_codes : list of str or None
+        Which measures are currently toggled ON in the chart. The
+        FIRST code in this list is treated as the "primary" measure —
+        it's the one counties are sorted by (biggest gap first). If
+        None or empty, we fall back to the cluster's first measure so
+        the chart is never blank.
     top_n : int
-        How many counties to show (typically 10, 15, or 20).
+        How many counties to show in ranked view (ignored if
+        compare_counties is given).
+    pinned_county : str or None
+        A single locationid (FIPS) to guarantee is included in the
+        chart even if it didn't make the top N — this is what the
+        "find a county" search box does.
+    compare_counties : list of str or None
+        Exactly the locationid values of the counties to show, in the
+        order given. When provided, this OVERRIDES state/top_n/pinned
+        entirely — it's the "compare two counties" mode.
 
-    Returns:
-    --------
-    (melted_df, raw_df, flag_set)
-        - melted_df: long-format DataFrame for px.bar — one row per
-          county × measure, with columns: locationid, locationname,
-          statedesc, measure (human-readable label), measure_code,
-          and value (the percentage).
-        - raw_df: wide-format DataFrame with the selected counties
-          (one row per county, one column per measure) — used for
-          the stat cards and coverage note.
-        - flag_set: set of locationid strings for counties flagged
-          as severely lacking (90th percentile or worse on any
-          measure in the cluster).
+    Returns
+    -------
+    (melted_df, raw_df)
+        melted_df : long-format DataFrame ready for px.bar (one row
+            per county x measure).
+        raw_df : wide-format DataFrame of just the counties shown —
+            used for stat cards.
     """
     cluster = CLUSTERS[cluster_key]
-    measure_codes = cluster["measures"]
+    valid_codes = cluster["measures"]
 
-    # --- Step 1: Filter by state ---
-    # WHY: The state dropdown narrows from ~3,144 national counties
-    # to one state's counties (Virginia has 133). The "ALL" option
-    # keeps all counties but we'll take only the top N below.
-    if state == "ALL":
+    # Keep only codes that actually belong to this cluster, in the
+    # cluster's canonical order, so the bar order is stable.
+    measure_codes = [c for c in (measure_codes or []) if c in valid_codes]
+    if not measure_codes:
+        measure_codes = [valid_codes[0]]
+
+    # --- Step 1: filter to the counties we care about ---
+    if compare_counties:
+        df = _places[_places["locationid"].isin(compare_counties)].copy()
+    elif state == "ALL":
         df = _places.copy()
     else:
         df = _places[_places["statedesc"] == state].copy()
 
-    # --- Step 2: Keep only the columns we need ---
-    # WHY: The pivoted DataFrame has many columns (location info +
-    # all 9 measures + population). We only need the location
-    # identifiers and the measures in the current cluster.
+    # --- Step 2: keep only the columns we need ---
     keep = ["locationid", "locationname", "statedesc"]
     for code in measure_codes:
         col = MEASURES[code]["column"]
@@ -489,59 +244,40 @@ def get_cluster_data(state="Virginia", cluster_key="access",
             keep.append(col)
     df = df[keep]
 
-    # Drop counties that have NO data for ANY measure in this cluster.
-    # WHY: A county with all-NaN values would show as empty bars and
-    # waste chart space. (how="all" means only drop if every measure
-    # column is NaN — a county with data for 5 of 7 measures stays.)
     measure_cols = [c for c in keep if c not in
                     ("locationid", "locationname", "statedesc")]
     df = df.dropna(subset=measure_cols, how="all")
 
-    # If nothing survived (e.g., a state with no social-needs data),
-    # return empty results so the chart shows an empty-state message.
     if df.empty:
-        return pd.DataFrame(), df, set()
+        return pd.DataFrame(), df
 
-    # --- Step 3: Sort ---
-    # WHY "biggest gap first" is the default: a program officer's
-    # primary question is "where is it worst?" — sorting by the
-    # selected measure puts the highest-need counties at the left
-    # where they're seen first. Alphabetical is the secondary option
-    # for when the user wants to find a specific county by name.
-    if sort_measure is None or sort_measure not in measure_codes:
-        sort_measure = measure_codes[0]
+    # --- Step 3: pick the exact counties to display ---
+    primary_col = MEASURES[measure_codes[0]]["column"]
 
-    sort_col = MEASURES[sort_measure]["column"]
-    if sort_order == "gap":
-        df = df.sort_values(sort_col, ascending=False)
+    if compare_counties:
+        # Keep the user's chosen order (County A first, then B).
+        order = {fips: i for i, fips in enumerate(compare_counties)}
+        df = df[df["locationid"].isin(order)]
+        df = df.sort_values(
+            by="locationid", key=lambda s: s.map(order)
+        )
     else:
-        df = df.sort_values("locationname")
+        df = df.sort_values(primary_col, ascending=False)
+        top_df = df.head(top_n)
+        # If a specific county was searched for and isn't already in
+        # the top N, pin it to the front so it's always visible.
+        if pinned_county and pinned_county not in top_df["locationid"].values:
+            pinned_row = df[df["locationid"] == pinned_county]
+            if not pinned_row.empty:
+                top_df = pd.concat([pinned_row, top_df], ignore_index=True)
+        df = top_df
 
-    # --- Step 4: Top N ---
-    # WHY: Even within one state, Virginia has 133 counties — too
-    # many for a grouped bar chart. We take the top N (default 15)
-    # after sorting, so the chart shows the most relevant counties.
-    # For the national view, this is essential (3,144 counties would
-    # be impossible to plot as bars).
-    df = df.head(top_n)
+    if df.empty:
+        return pd.DataFrame(), df
 
-    # --- Step 5: Flag severe counties (national threshold) ---
-    # WHY: We compute flags against the FULL national distribution
-    # (not just the current state) so "flagged" means "extreme
-    # relative to the whole country," not just "extreme within
-    # this state." A county that's worst in Virginia but only
-    # average nationally should NOT be flagged.
-    flags = flag_severe_counties(_places, measure_codes)
-
-    # --- Step 6: Melt to long format ---
-    # WHY: Plotly Express's px.bar with barmode="group" needs data
-    # in "long" format — one row per bar. Right now our DataFrame is
-    # "wide" (one row per county, one column per measure). Melting
-    # transforms it so each county × measure combination gets its
-    # own row, which is what px.bar uses to draw and color each bar.
+    # --- Step 4: melt to long format for px.bar ---
     id_cols = ["locationid", "locationname", "statedesc"]
-    value_vars = []
-    var_labels = {}  # maps column name → human-readable label
+    value_vars, var_labels = [], {}
     for code in measure_codes:
         col = MEASURES[code]["column"]
         if col in df.columns:
@@ -554,123 +290,127 @@ def get_cluster_data(state="Virginia", cluster_key="access",
         var_name="measure_col",
         value_name="value",
     )
-    # Replace raw column names with human-readable labels for the
-    # legend and hover tooltips.
     melted["measure"] = melted["measure_col"].map(var_labels)
-    # Keep the measure code for color mapping (MEASURE_COLORS is
-    # keyed by code, not by label).
     melted["measure_code"] = melted["measure_col"]
-
-    # Drop rows where the value is NaN — these would render as
-    # invisible bars and clutter the hover.
     melted = melted.dropna(subset=["value"])
 
-    return melted, df, flags
+    return melted, df
 
 
 # ============================================================
-# 9. SUMMARY STATISTICS FOR STAT CARDS
+# 8. SUMMARY STATISTICS FOR STAT CARDS
 # ============================================================
-
-def get_state_summary(state, cluster_key, sort_measure):
+def get_state_summary(state, cluster_key, measure_code):
     """
-    Compute the numbers shown in the stat cards above the chart.
-
-    WHY: The stat cards give the user a quick read on the current
-    selection — what's the average gap, how many counties have data,
-    which county is worst, and how many are flagged. These numbers
-    must reflect the user's current filter (state + cluster + sort
-    measure), not national totals, because a program officer looking
-    at Virginia doesn't care about California's averages.
-
-    Returns a dict with: avg, n_counties, worst_county, worst_val,
-    n_flagged.
+    Numbers for the two stat cards above the chart: the average gap
+    for the primary measure, and which county has the biggest gap.
     """
-    cluster = CLUSTERS[cluster_key]
-    measure_codes = cluster["measures"]
-
-    # Use the full dataset (not the top-N subset) for summary stats
-    # so the averages reflect the entire state, not just the 15
-    # counties shown in the chart.
     if state == "ALL":
         df = _places.copy()
     else:
         df = _places[_places["statedesc"] == state].copy()
 
-    sort_col = MEASURES[sort_measure]["column"]
-
-    # Counties with data for the sort measure
-    has_data = df[sort_col].notna()
+    col = MEASURES[measure_code]["column"]
+    has_data = df[col].notna()
     n_counties = int(has_data.sum())
 
-    # Average gap for the sort measure (simple mean — not population-
-    # weighted, because CDC PLACES already accounts for sample size
-    # in its small-area estimation methodology)
-    avg_val = df.loc[has_data, sort_col].mean() if n_counties > 0 else 0.0
+    avg_val = df.loc[has_data, col].mean() if n_counties > 0 else 0.0
 
-    # Worst county (highest value = biggest gap)
     if n_counties > 0:
-        worst_row = df.loc[has_data].nlargest(1, sort_col).iloc[0]
+        worst_row = df.loc[has_data].nlargest(1, col).iloc[0]
         worst_county = worst_row["locationname"]
-        worst_val = worst_row[sort_col]
+        worst_val = worst_row[col]
     else:
         worst_county = "—"
         worst_val = 0.0
-
-    # Count flagged counties in this selection
-    flags = flag_severe_counties(_places, measure_codes)
-    if state != "ALL":
-        state_fips = set(df["locationid"])
-        n_flagged = len(flags & state_fips)
-    else:
-        n_flagged = len(flags)
 
     return {
         "avg": avg_val,
         "n_counties": n_counties,
         "worst_county": worst_county,
         "worst_val": worst_val,
-        "n_flagged": n_flagged,
     }
 
 
 # ============================================================
-# 10. HELPER: SORT-MEASURE DROPDOWN OPTIONS
+# 9. SIDEBAR — TOP 10 MOST VULNERABLE COUNTIES
 # ============================================================
-
-def get_measure_options(cluster_key):
+def get_top_vulnerable_counties(state, measure_codes, n=10):
     """
-    Return dropdown options for the "sort by" measure selector.
+    Rank counties for the sidebar. A county's "vulnerability score"
+    is just the average of whatever measures are currently toggled on
+    the chart — so the sidebar always reflects what's actually being
+    shown, not a fixed formula.
 
-    WHY: When the user switches clusters (e.g., from Access to
-    Social), the sort-measure dropdown must update to show only the
-    measures in the new cluster. If ACCESS2 was selected and the
-    user switches to Social, ACCESS2 isn't in that cluster — the
-    dropdown needs to reset to a valid option (FOODINSECU by
-    default).
+    Returns a DataFrame with locationid, locationname, statedesc,
+    score — worst (highest score) first, limited to n rows.
+    """
+    empty = pd.DataFrame(
+        columns=["locationid", "locationname", "statedesc", "score"]
+    )
+    if not measure_codes:
+        return empty
+
+    if state == "ALL":
+        df = _places.copy()
+    else:
+        df = _places[_places["statedesc"] == state].copy()
+
+    cols = [MEASURES[c]["column"] for c in measure_codes
+            if MEASURES[c]["column"] in df.columns]
+    if not cols:
+        return empty
+
+    sub = df.dropna(subset=cols, how="all").copy()
+    if sub.empty:
+        return empty
+
+    sub["score"] = sub[cols].mean(axis=1, skipna=True)
+    sub = sub.sort_values("score", ascending=False).head(n)
+    return sub[["locationid", "locationname", "statedesc", "score"]].reset_index(drop=True)
+
+
+# ============================================================
+# 10. HELPER: MEASURE DROPDOWN OPTIONS
+# ============================================================
+def get_measure_options(cluster_key, exclude=None):
+    """
+    Dropdown/checklist options for a cluster's measures.
+
+    exclude : str or None — leave out one measure code (used to build
+    the "also compare" checklist without repeating the primary
+    measure that's already shown).
     """
     cluster = CLUSTERS[cluster_key]
+    codes = [c for c in cluster["measures"] if c != exclude]
+    return [{"label": MEASURES[c]["label"], "value": c} for c in codes]
+
+
+# ============================================================
+# 11. HELPER: COUNTY SEARCH / COMPARE DROPDOWN OPTIONS
+# ============================================================
+def get_county_options(state):
+    """
+    Alphabetical {label, value} list of counties, for the "find a
+    county" search box and the two "compare counties" dropdowns.
+    Value is the locationid (FIPS); label shows the state too so
+    same-named counties in different states aren't ambiguous.
+    """
+    if state == "ALL":
+        df = _places
+    else:
+        df = _places[_places["statedesc"] == state]
+    df = df.sort_values("locationname")
     return [
-        {"label": MEASURES[c]["label"], "value": c}
-        for c in cluster["measures"]
+        {"label": f"{row.locationname}, {row.statedesc}", "value": row.locationid}
+        for row in df.itertuples()
     ]
 
 
 # ============================================================
-# 11. HELPER: TOTAL COUNTY COUNT (for coverage notes)
+# 12. HELPER: TOTAL COUNTY COUNT (for the coverage note)
 # ============================================================
-
 def get_total_counties(state):
-    """
-    Return the total number of counties in the given state
-    (or nationally if state == "ALL").
-
-    WHY: The coverage note below the chart tells the user how many
-    counties have data vs. how many exist. For example, "Data covers
-    129 of 133 counties in Virginia" alerts the user that 4 counties
-    are missing without surprising them with a shorter-than-expected
-    chart.
-    """
     if state == "ALL":
         return len(_places)
     return len(_places[_places["statedesc"] == state])
