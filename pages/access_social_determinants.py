@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 import dash
-from dash import Input, Output, State, callback, dcc, html, no_update
+from dash import Input, Output, State, callback, dcc, html
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -125,7 +125,6 @@ def _build_bar_chart(melted, measure_codes, county_order):
         x="locationname", y="value", color="measure",
         barmode="group",
         color_discrete_map=LABEL_COLORS,
-        custom_data=["locationid"],
         category_orders={"measure": measure_order, "locationname": county_order},
     )
 
@@ -181,12 +180,7 @@ def _build_coverage_note(state, cluster_key):
             className="badge badge--high",
             style={"display": "inline-block", "marginBottom": "0.4rem"},
         ))
-    notes.append(html.Span(
-        "Click any bar to see that county on the disease prevalence "
-        "map (Page 1).",
-        className="stat__label",
-        style={"display": "block", "marginTop": "0.3rem", "fontStyle": "italic"},
-    ))
+    
     return html.Div(notes, style={"marginTop": "0.75rem"})
 
 
@@ -211,8 +205,6 @@ def layout(**kwargs):
     return html.Div(
         className="page-wrap",
         children=[
-            dcc.Location(id="access-nav-url", refresh=True),
-
             html.Div(
                 className="page-header",
                 children=[
@@ -645,23 +637,3 @@ def update_view(state, cluster_key, primary_measure, compare_checked,
         avg_value, avg_label, worst_value, worst_label,
         coverage_note, sidebar_children,
     )
-
-
-# ============================================================
-# CROSS-PAGE NAVIGATION — click a bar to jump to Page 1's map
-# ============================================================
-@callback(
-    Output("access-nav-url", "pathname"),
-    Output("access-nav-url", "search"),
-    Input("access-bar-chart", "clickData"),
-    prevent_initial_call=True,
-)
-def jump_to_map(clickData):
-    if not clickData or not clickData.get("points"):
-        return no_update, no_update
-    point = clickData["points"][0]
-    customdata = point.get("customdata")
-    if not customdata or len(customdata) == 0:
-        return no_update, no_update
-    fips = customdata[0]
-    return "/", f"?locationid={fips}"
