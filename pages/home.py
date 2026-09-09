@@ -69,9 +69,9 @@ def layout(**kwargs):
             ),
 
             html.Div(
-                className = "grid grid--3",
+                className = "grid grid--3 stat-row",
                 children = [
-                    _stat_card("VA-total", "Population-weighted %"),
+                    _stat_card("US-total", "Population-weighted %"),
                     _stat_card("county-rank", "Selected County Rank"),
                     html.Div(
                          className = "panel stat",
@@ -222,8 +222,8 @@ def update_map(selected_disease, adjustment_value, selected_state):
     )
     return fig
 @dash.callback(
-    Output("VA-total-value", "children"),
-    Output("VA-total-delta", "children"),
+    Output("US-total-value", "children"),
+    Output("US-total-delta", "children"),
     Output("county-rank-value", "children"),
     Output("county-rank-delta", "children"),
     Output("top-counties-scope", "children"),
