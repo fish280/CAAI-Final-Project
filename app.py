@@ -38,7 +38,7 @@ app.layout = html.Div([
                         html.Li(
                             dcc.Link(
                                 "Social Determinants & Access",
-                                href="/social_determinants_and_access",
+                                href="/access_and_social_determinants",
                                 className="nav-btn",
                             )
                         ),
