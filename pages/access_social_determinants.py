@@ -341,7 +341,7 @@ def layout(**kwargs):
                                             html.Span("Chart width", className="label"),
                                             dcc.Slider(
                                                 id="access-width-scale",
-                                                min=50, max=200, step=10, value=100,
+                                                min=50, max=200, step=10, value=80,
                                                 marks={50: "50%", 100: "100%",
                                                        150: "150%", 200: "200%"},
                                             ),
