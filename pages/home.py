@@ -8,7 +8,7 @@ picks it up automatically as long as your main app.py has
 """
 
 import json
-import urllib.request
+from pathlib import Path
 
 import dash
 from dash import dcc, html, Input, Output
@@ -29,15 +29,23 @@ from ui_notes import (
 dash.register_page(__name__, path="/", name="Public Health Overview")
 
 # --------------------------------------------------------------------
-# Virginia county boundaries (FIPS-keyed geojson), fetched once at
-# import time and cached at module level for every callback to reuse.
+# County boundaries (FIPS-keyed geojson), loaded once at import time and
+# cached at module level for every callback to reuse.
+#
+# This file is committed to the repo on purpose. It used to be fetched
+# from raw.githubusercontent.com at import time, which meant a 3 MB
+# download on every cold start -- and because that ran at module level,
+# a slow or failed request took the whole app down rather than just this
+# page. Reading it from disk removes the network from startup entirely.
+#
+# Source: https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json
+# Re-download that URL into data/ if county boundaries ever need updating.
 # --------------------------------------------------------------------
-GEOJSON_URL = (
-    "https://raw.githubusercontent.com/plotly/datasets/master/"
-    "geojson-counties-fips.json"
+GEOJSON_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "geojson-counties-fips.json"
 )
 
-with urllib.request.urlopen(GEOJSON_URL) as resp:
+with open(GEOJSON_PATH, encoding="utf-8") as resp:
     _counties_geojson = json.load(resp)
 
 
