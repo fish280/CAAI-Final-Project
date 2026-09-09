@@ -76,7 +76,7 @@ def layout(**kwargs):
                     html.Div(
                          className = "panel stat",
                          children = [
-                              html.Div("Highest prevalence", className = "stat__label"),
+                              html.Div("Most affected counties", className = "stat__label"),
                               html.Div(id="top-counties-scope", className="stat__delta"),
                               html.Ol(id = "top-counties-list", className = "top-counties-list"),
                          ],
