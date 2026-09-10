@@ -1,15 +1,28 @@
 """
 ui_notes.py -- shared UI building blocks used by every page.
 
-Nothing here is owned by one page. If two pages show the same kind of
-thing -- a readout above a chart, a legend explaining what the colors
-mean, an explainer for a piece of CDC jargon -- it is built once here so
-the wording and the styling match across the whole dashboard instead of
-each page inventing its own.
 
-All styling comes from the classes in assets/styles.css (.readout,
-.caveats, .chart-legend, .note). Deliberately no inline style dicts:
-change the look in the stylesheet and it changes on all four pages.
+
+AI ASSISTANCE:
+  This module holds UI pieces shared across all four pages (the readout
+  strip above each chart, the correlation/estimate caveat blocks, the
+  chart legends, the collapsed jargon explainers). Decided here: that
+  jargon like "prevalence" and crude vs. age-adjusted needed explaining
+  in the app itself rather than left implicit, that the professor's two
+  correlation caveats needed to be impossible to miss rather than a
+  footnote, and that these should be built once and shared rather than
+  each page inventing its own version.
+  Specifics:
+    - Asked AI to implement the shared components and the matching CSS
+      classes in assets/styles.css, so the look stays identical across
+      pages if the styling ever changes
+    - Asked AI to do a final pass tightening the UI across all four
+      pages: attaching each readout to its chart panel, moving the
+      caveat blocks to the bottom of each page, and fixing the active-
+      tab highlight in the nav
+  All AI-suggested code was reviewed and checked against the running
+  app before being added to the project.
+  -- [Samuel]
 """
 
 from dash import html

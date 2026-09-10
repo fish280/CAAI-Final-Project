@@ -4,15 +4,6 @@ Page 2 -- Drivers & Risk Factors.
 The question this page answers: "Is a county's disease rate explained by
 its risk factors and access gaps, or is something else going on there?"
 
-The user picks any two of the 40 CDC PLACES measures for the X and Y
-axes, and every county in the selection is plotted. A least-squares line
-shows the expected relationship; each county is then colored by how far
-it sits ABOVE or BELOW that line. Counties in deep rust are the ones
-whose outcome is worse than their drivers predict -- the counties that
-would be invisible in a flat ranking.
-
-Clicking any bubble pins that county to a watchlist below the chart,
-which can be exported to CSV.
 
 Callbacks on this page: 5
   1. update_scatter    -- 5 inputs -> figure + 3 live stat cards + footnote
@@ -21,10 +12,28 @@ Callbacks on this page: 5
   4. render_watchlist  -- store -> styled table
   5. download_watchlist-- store -> CSV file
 
-AI assistance: used Claude Code to draft the residual-coloring approach,
-the pattern-matching remove-button callback, and the hover template;
-reviewed and edited all of it, and verified the correlation figures
-against the raw CSV by hand. -- SAMUEL: edit to match what you did.
+AI ASSISTANCE:
+  Used AI to help build this page's functionality and debug it, based on
+  decisions made here first: which controls the page needed (driver/
+  outcome dropdowns restricted by category, state filter, crude vs.
+  age-adjusted toggle, a watchlist with CSV export), and the statistical
+  approach for the "expected value" line -- a simple least-squares linear
+  fit, with the gap defined as actual minus predicted, in percentage
+  points.
+  Specifics:
+    - Prompted AI to draft the residual-coloring scatter approach and
+      the county-outlier ranking
+    - Prompted AI to build the pattern-matching remove-button callback
+      for the watchlist, and the hover/click-to-pin behavior
+    - Asked AI to debug a duplicate-decorator syntax error introduced
+      while hand-editing the layout, and a merge conflict from
+      untracked __pycache__ files
+    - Asked AI to draft the plain-English measure-subtitle glossary
+      (pulling CDC's own question wording) after finding the raw
+      measure labels unclear to a first-time reader
+  All AI-suggested code was reviewed, run against the real data, and
+  edited before being added to the project.
+  -- [Samuel]
 """
 
 import dash
